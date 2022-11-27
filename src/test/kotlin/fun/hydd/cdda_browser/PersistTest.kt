@@ -32,9 +32,12 @@ class PersistTest {
       cddaVersion.status = CddaVersionStatus.STOP
       cddaVersion.publishedAt = LocalDateTime.now()
       val cddaMod = CddaMod()
+      cddaMod.modId = "test_mod"
       cddaMod.name = "test mod"
+      cddaMod.description = "test mod description"
       cddaMod.obsolete = false
       cddaMod.core = false
+      cddaMod.depModIds = mutableSetOf("dda")
       cddaMod.cddaVersion = cddaVersion
       cddaVersion.cddaMods.add(cddaMod)
       val cddaObject = CddaObject()

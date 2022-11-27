@@ -11,8 +11,14 @@ open class CddaMod {
   @Column(name = "id", nullable = false)
   open var id: Long? = null
 
+  @Column(name = "mod_id", nullable = false)
+  open var modId: String? = null
+
   @Column(name = "name", nullable = false)
   open var name: String? = null
+
+  @Column(name = "description", nullable = false, length = 1000)
+  open var description: String? = null
 
   @ManyToOne(
     cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
@@ -35,6 +41,10 @@ open class CddaMod {
   )
   open var cddaObjects: MutableSet<CddaObject> = mutableSetOf()
 
+  @ElementCollection
+  @CollectionTable(name = "cdda_mod_depModIds", joinColumns = [JoinColumn(name = "owner_id")])
+  @Column(name = "dep_mod_id")
+  open var depModIds: MutableSet<String> = mutableSetOf()
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
