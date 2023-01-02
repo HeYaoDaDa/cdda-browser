@@ -8,7 +8,7 @@ internal class StringUtilKtTest {
   fun getStringHashTest() {
     Assertions.assertEquals(
       "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
-      getStringHash("hello world!")
+      StringUtil.getStringHash("hello world!")
     )
   }
 }

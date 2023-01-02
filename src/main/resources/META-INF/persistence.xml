@@ -9,6 +9,9 @@
     <class>fun.hydd.cdda_browser.entity.CddaObject</class>
     <class>fun.hydd.cdda_browser.entity.CddaMod</class>
     <class>fun.hydd.cdda_browser.entity.CddaVersion</class>
+      <class>fun.hydd.cdda_browser.entity.JsonEntity</class>
+      <class>fun.hydd.cdda_browser.entity.GetTextPo</class>
+    <class>fun.hydd.cdda_browser.entity.FileEntity</class>
 
     <properties>
       <!-- PostgresSQL -->

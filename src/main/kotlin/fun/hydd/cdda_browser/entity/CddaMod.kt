@@ -33,12 +33,7 @@ open class CddaMod {
   @Column(name = "core", nullable = false)
   open var core: Boolean? = null
 
-  @ManyToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-  @JoinTable(
-    name = "cdda_mod_cddaObjects",
-    joinColumns = [JoinColumn(name = "cddaMod_id")],
-    inverseJoinColumns = [JoinColumn(name = "cddaObjects_id")]
-  )
+  @OneToMany(mappedBy = "cddaMod", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var cddaObjects: MutableSet<CddaObject> = mutableSetOf()
 
   @ElementCollection

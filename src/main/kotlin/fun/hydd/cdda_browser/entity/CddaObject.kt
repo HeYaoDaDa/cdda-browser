@@ -2,8 +2,6 @@ package `fun`.hydd.cdda_browser.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
-import `fun`.hydd.cdda_browser.converter.JsonObjectConverter
-import io.vertx.core.json.JsonObject
 import org.hibernate.Hibernate
 import javax.persistence.*
 
@@ -15,6 +13,11 @@ open class CddaObject {
   @Column(name = "id", nullable = false)
   open var id: Long? = null
 
+
+  @ManyToOne
+  @JoinColumn(name = "cdda_mod_id")
+  open var cddaMod: CddaMod? = null
+
   @Enumerated(EnumType.STRING)
   @Column(name = "json_type", nullable = false)
   open var jsonType: JsonType? = null
@@ -23,10 +26,21 @@ open class CddaObject {
   @Column(name = "cdda_type", nullable = false)
   open var cddaType: CddaType? = null
 
-  @Lob
-  @Convert(converter = JsonObjectConverter::class)
-  @Column(name = "json_object", nullable = false)
-  open var jsonObject: JsonObject? = null
+
+  @ManyToOne(
+    cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
+    optional = false
+  )
+  @JoinColumn(name = "original_json_id", nullable = false)
+  open var originalJson: JsonEntity? = null
+
+
+  @ManyToOne(
+    cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
+    optional = false
+  )
+  @JoinColumn(name = "json_id", nullable = false)
+  open var json: JsonEntity? = null
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

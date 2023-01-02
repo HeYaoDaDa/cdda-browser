@@ -1,5 +1,6 @@
 package `fun`.hydd.cdda_browser.util
 
+import `fun`.hydd.cdda_browser.extension.getCollection
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.core.json.array
@@ -8,7 +9,6 @@ import io.vertx.kotlin.core.json.obj
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.lang.instrument.IllegalClassFormatException
 
 internal class JsonUtilKtTest {
   private var json1 = JsonObject()
@@ -67,7 +67,7 @@ internal class JsonUtilKtTest {
   fun sortJsonObjectTest() {
     Assertions.assertEquals(
       "{\"a\":1,\"b\":2,\"c\":{\"a\":1,\"b\":2,\"c\":4,\"d\":5,\"e\":6,\"f\":7,\"g\":8,\"h\":9},\"d\":5,\"e\":6,\"f\":7,\"g\":8,\"h\":[\"b\",\"a\",{\"1\":0,\"3\":3,\"a\":1,\"c\":3},\"z\"]}",
-      sortJsonObject(json1).toString()
+      JsonUtil.sortJsonObject(json1).toString()
     )
   }
 
@@ -75,39 +75,39 @@ internal class JsonUtilKtTest {
   fun sortJsonArrayTest() {
     Assertions.assertEquals(
       "[\"b\",1,3,{\"a\":1,\"b\":2,\"c\":{\"a\":1,\"b\":2,\"c\":4,\"d\":5,\"e\":6,\"f\":7,\"g\":8,\"h\":9},\"d\":5,\"e\":6,\"f\":7,\"g\":8,\"h\":[\"b\",\"a\",{\"1\":0,\"3\":3,\"a\":1,\"c\":3},\"z\"]},4]",
-      sortJsonArray(jsonArray1).toString()
+      JsonUtil.sortJsonArray(jsonArray1).toString()
     )
   }
 
   @Test
   fun getStringListTest() {
-    Assertions.assertEquals(listOf("string1", "string2"), json3.getStringList("stringList"))
+    Assertions.assertEquals(listOf("string1", "string2"), json3.getCollection<String>("stringList"))
   }
 
   @Test
   fun getIntListTest() {
-    Assertions.assertEquals(listOf(1, 2), json3.getIntList("intList"))
+    Assertions.assertEquals(listOf(1, 2), json3.getCollection<Int>("intList"))
   }
 
   @Test
   fun getIntListTestThrow() {
-    Assertions.assertThrows(IllegalClassFormatException::class.java) {
-      json3.getIntList("doubleList")
+    Assertions.assertThrows(Exception::class.java) {
+      json3.getCollection<Int>("doubleList")
     }
   }
 
   @Test
   fun getDoubleListTest() {
-    Assertions.assertEquals(listOf(1.5, 2.5), json3.getDoubleList("doubleList"))
+    Assertions.assertEquals(listOf(1.5, 2.5), json3.getCollection<Double>("doubleList"))
   }
 
   @Test
   fun getDoubleListTest1() {
-    Assertions.assertEquals(listOf(1.5, 2.0, 3.0), json3.getDoubleList("doubleAndIntList"))
+    Assertions.assertEquals(listOf(1.5, 2.0, 3.0), json3.getCollection<Double>("doubleAndIntList"))
   }
 
   @Test
   fun getBooleanListTest() {
-    Assertions.assertEquals(listOf(true, false), json3.getBooleanList("booleanList"))
+    Assertions.assertEquals(listOf(true, false), json3.getCollection<Boolean>("booleanList"))
   }
 }
