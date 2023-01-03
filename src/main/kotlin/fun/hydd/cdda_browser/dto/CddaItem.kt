@@ -2,15 +2,14 @@ package `fun`.hydd.cdda_browser.dto
 
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
+import `fun`.hydd.cdda_browser.dao.JsonEntityDao
 import `fun`.hydd.cdda_browser.entity.CddaMod
 import `fun`.hydd.cdda_browser.entity.CddaObject
 import `fun`.hydd.cdda_browser.entity.JsonEntity
 import `fun`.hydd.cdda_browser.extension.getCollection
 import `fun`.hydd.cdda_browser.extension.getHashString
 import `fun`.hydd.cdda_browser.extension.getTranslation
-import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
-import io.vertx.kotlin.coroutines.await
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -154,7 +153,7 @@ class CddaItem(
     cddaObject.cddaMod = cddaMod
 
     val originalJsonHash = this.json.getHashString()
-    var originalJsonEntity = findJsonEntity(factory, originalJsonHash)
+    var originalJsonEntity = JsonEntityDao.findByHashCode(factory, originalJsonHash)
     if (originalJsonEntity == null) {
       originalJsonEntity = JsonEntity()
       originalJsonEntity.json = this.json
@@ -164,7 +163,7 @@ class CddaItem(
     cddaObject.originalJson = originalJsonEntity
     val json = JsonObject.mapFrom(this.data!!)
     val jsonHash = json.getHashString()
-    var jsonEntity = findJsonEntity(factory, jsonHash)
+    var jsonEntity = JsonEntityDao.findByHashCode(factory, jsonHash)
     if (jsonEntity == null) {
       jsonEntity = JsonEntity()
       jsonEntity.json = json
@@ -172,11 +171,5 @@ class CddaItem(
     }
     cddaObject.json = jsonEntity
     return cddaObject
-  }
-
-  private suspend fun findJsonEntity(factory: Stage.SessionFactory, hashCode: String): JsonEntity? {
-    return Future.fromCompletionStage(factory.withSession {
-      it.createQuery<JsonEntity>("FROM JsonEntity where hashCode = \'$hashCode\'").singleResultOrNull
-    }).await()
   }
 }

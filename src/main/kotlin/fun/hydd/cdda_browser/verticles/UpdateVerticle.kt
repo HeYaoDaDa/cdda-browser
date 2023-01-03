@@ -1,15 +1,17 @@
 package `fun`.hydd.cdda_browser.verticles
 
+import `fun`.hydd.cdda_browser.dao.CddaVersionDao
+import `fun`.hydd.cdda_browser.dao.FileEntityDao
+import `fun`.hydd.cdda_browser.dao.JsonEntityDao
 import `fun`.hydd.cdda_browser.dto.GitHubReleaseDto
 import `fun`.hydd.cdda_browser.dto.GitTagDto
 import `fun`.hydd.cdda_browser.entity.CddaVersion
 import `fun`.hydd.cdda_browser.entity.FileEntity
 import `fun`.hydd.cdda_browser.entity.GetTextPo
-import `fun`.hydd.cdda_browser.entity.JsonEntity
 import `fun`.hydd.cdda_browser.server.CddaItemParseManager
 import `fun`.hydd.cdda_browser.server.ModServer
+import `fun`.hydd.cdda_browser.util.GitUtil
 import `fun`.hydd.cdda_browser.util.HttpUtil
-import io.vertx.core.Future
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.RequestOptions
 import io.vertx.core.json.JsonObject
@@ -17,20 +19,13 @@ import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.await
 import io.vertx.kotlin.coroutines.awaitBlocking
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.Ref
-import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.revwalk.RevTag
-import org.eclipse.jgit.revwalk.RevWalk
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.nio.file.Paths
 import java.security.MessageDigest
 import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.util.*
-import java.util.concurrent.CompletionStage
 import javax.persistence.Persistence
 
 
@@ -38,22 +33,21 @@ class UpdateVerticle : CoroutineVerticle() {
   private val log = LoggerFactory.getLogger(this.javaClass)
   private lateinit var git: Git
   private lateinit var factory: Stage.SessionFactory
-  private val repositoryPath = Paths.get(System.getProperty("user.home"), "Documents", "Cataclysm-DDA").toFile()
-
+  private val repoDir: File = Paths.get(System.getProperty("user.home"), "Documents", "Cataclysm-DDA").toFile()
 
   override suspend fun start() {
     super.start()
     init()
-//    update()
-    val updateVersionList = getUpdateVersionList()
+//    GitUtil.update(git)
+    val updateVersionList = getNeedUpdateVersions()
     log.info("Need update version size is ${updateVersionList.size}")
     for (cddaVersion in updateVersionList) {
-//      rest(cddaVersion.tagName!!)
-      val cddaModDtoList = ModServer.getCddaModDtoList(repositoryPath.absolutePath, vertx.fileSystem())
+//      GitUtil.hardRestToTag(git, cddaVersion.tagName!!)
+      val cddaModDtoList = ModServer.getCddaModDtoList(repoDir.absolutePath, vertx.fileSystem())
       val cddaItemParseManager = CddaItemParseManager(vertx, cddaVersion, cddaModDtoList)
       cddaItemParseManager.parseAll(factory)
 
-      val codePathPairs = Paths.get(repositoryPath.absolutePath, "lang", "po").toFile().listFiles()
+      val codePathPairs = Paths.get(repoDir.absolutePath, "lang", "po").toFile().listFiles()
         ?.filter { it.isFile && it.name.endsWith(".po") }
         ?.map { Pair(it.name.replace("_", "-").replace(".po", ""), it.absolutePath) }
       cddaVersion.pos = codePathPairs?.map {
@@ -64,7 +58,7 @@ class UpdateVerticle : CoroutineVerticle() {
         val messageDigest = MessageDigest.getInstance("SHA-256")
         val hash = messageDigest.digest(buffer)
         val hashCode = hash.fold("") { str, byte -> str + "%02x".format(byte) }
-        var fileEntity = findFileEntity(factory, hashCode)
+        var fileEntity = FileEntityDao.findByHashCode(factory, hashCode)
         if (fileEntity == null) {
           fileEntity = FileEntity()
           fileEntity.buffer = buffer.toTypedArray()
@@ -73,37 +67,17 @@ class UpdateVerticle : CoroutineVerticle() {
         po.fileEntity = fileEntity
         po
       }!!.toMutableSet()
-      saveVersion(cddaVersion)
-      val test = factory.withSession {
-        it.createQuery<JsonEntity>("FROM JsonEntity").setMaxResults(1).singleResult
-      }.await()
-      log.info("\n" + test.json!!.encodePrettily())
+      CddaVersionDao.save(factory, cddaVersion)
+      log.info("\n" + JsonEntityDao.first(factory)!!.json!!.encodePrettily())
     }
   }
 
-  private suspend fun findFileEntity(factory: Stage.SessionFactory, hashCode: String): FileEntity? {
-    return factory.withSession {
-      it.createQuery<FileEntity>("FROM FileEntity where hashCode = \'$hashCode\'").singleResultOrNull
-    }.await()
-  }
 
-  suspend fun saveVersion(version: CddaVersion) {
-    factory.withTransaction { session, _ -> session.persist(version) }.await()
-  }
-
-  fun <T> CompletionStage<T>.toFuture(): Future<T> {
-    return Future.fromCompletionStage(this)
-  }
-
-  suspend fun <T> CompletionStage<T>.await(): T {
-    return this.toFuture().await()
-  }
-
-  private suspend fun getUpdateVersionList(): List<CddaVersion> {
+  private suspend fun getNeedUpdateVersions(): List<CddaVersion> {
     val updateVersionList = mutableListOf<CddaVersion>()
     val repoLatestVersionDto = getRepoLatestVersionDto()
     if (repoLatestVersionDto != null) {
-      val dbLatestVersionDto = getLatestVersion()
+      val dbLatestVersionDto = CddaVersionDao.getLatest(factory)
       if (dbLatestVersionDto == null) {
         updateVersionList.add(repoLatestVersionDto)
       } else {
@@ -121,12 +95,16 @@ class UpdateVerticle : CoroutineVerticle() {
     return updateVersionList
   }
 
+  /**
+   * suspend init verticle
+   *
+   */
   private suspend fun init() {
     log.info("Start init")
     factory = awaitBlocking {
       Persistence.createEntityManagerFactory("cdda-browser").unwrap(Stage.SessionFactory::class.java)
     }
-    git = initGit()
+    git = initGitRepo()
     log.info("End init")
   }
 
@@ -135,17 +113,17 @@ class UpdateVerticle : CoroutineVerticle() {
    *
    * @return
    */
-  private suspend fun initGit(): Git {
+  private suspend fun initGitRepo(): Git {
     log.info("Start initGit")
-    log.info("Repo path is $repositoryPath")
+    log.info("Repo path is $repoDir")
     return vertx.executeBlocking {
-      if (repositoryPath.exists()) {
+      if (repoDir.exists()) {
         log.info("Repo is exists")
-        it.complete(Git.open(repositoryPath))
+        it.complete(Git.open(repoDir))
       } else {
         log.info("Repo is not exists")
         it.complete(
-          Git.cloneRepository().setDirectory(repositoryPath).setURI("https://github.com/CleverRaven/Cataclysm-DDA.git")
+          Git.cloneRepository().setDirectory(repoDir).setURI("https://github.com/CleverRaven/Cataclysm-DDA.git")
             .setBranch(Constants.MASTER).call()
         )
       }
@@ -177,15 +155,6 @@ class UpdateVerticle : CoroutineVerticle() {
   }
 
   /**
-   * return latest cdda version in db
-   */
-  private suspend fun getLatestVersion(): CddaVersion? {
-    return Future.fromCompletionStage(factory.withSession {
-      it.createQuery<CddaVersion>("FROM CddaVersion ORDER BY releaseDate DESC").setMaxResults(1).singleResultOrNull
-    }).await()
-  }
-
-  /**
    * By tag name get GitHub GithubReleaseDto
    */
   private suspend fun getReleaseByTagName(tagName: String): GitHubReleaseDto {
@@ -202,38 +171,21 @@ class UpdateVerticle : CoroutineVerticle() {
   }
 
   /**
-   * update git repo
-   */
-  private suspend fun update() {
-    log.info("Start update")
-    //TODO out time issue
-    awaitBlocking {
-      git.pull().setRemote(Constants.DEFAULT_REMOTE_NAME).setRemoteBranchName(Constants.MASTER).call()
-    }
-    log.info("End update")
-  }
-
-  /**
-   * rest git repo to tag
-   */
-  private suspend fun rest(tagName: String) {
-    log.info("Start rest to $tagName")
-    awaitBlocking {
-      git.reset().setMode(ResetCommand.ResetType.HARD)
-        .setRef(tagName)
-        .call()
-    }
-    log.info("End rest to $tagName")
-  }
-
-  /**
    * Returns the CddaVersion list after the specified time (not include CddaVersion of specified time)
    *
    * @param date
    * @return
    */
   private suspend fun getNeedUpdateVersionList(date: LocalDateTime): List<CddaVersion> {
-    val afterTagList = getAfterTagList(date)
+    val localRefs = git.tagList().call()
+    val result = ArrayList<GitTagDto>()
+    for (localRef in localRefs) {
+      val gitTagDto = GitTagDto(GitUtil.getRevObject(git, localRef))
+      if (gitTagDto.date.isAfter(date)) {
+        result.add(gitTagDto)
+      }
+    }
+    val afterTagList = result.sortedBy { it.date }
     return afterTagList.map { tag2CddaVersion(it) }
   }
 
@@ -241,84 +193,10 @@ class UpdateVerticle : CoroutineVerticle() {
    * return repo latest GitTagDto
    */
   private fun getLatestGitTagDto(): GitTagDto? {
-    val tagRef = getLatestTagRef()
+    val tagRef = GitUtil.getLatestTagRef(git)
     return if (tagRef != null)
-      tagRef2GitTagDto(tagRef)
+      GitTagDto(GitUtil.getRevObject(git, tagRef))
     else null
   }
 
-  /**
-   * Returns the GitTagDto list after the specified time (not include GitTagDto of specified time)
-   */
-  private fun getAfterTagList(date: LocalDateTime): List<GitTagDto> {
-    val localRefs = git.tagList()
-      .call()
-    val result = ArrayList<GitTagDto>()
-    for (localRef in localRefs) {
-      val gitTagDto = tagRef2GitTagDto(localRef)
-      if (gitTagDto.date.isAfter(date)) {
-        result.add(gitTagDto)
-      }
-    }
-    return result.sortedBy { it.date }
-  }
-
-  /**
-   * Ref convert to GitTagDto
-   */
-  private fun tagRef2GitTagDto(tagRef: Ref): GitTagDto {
-    RevWalk(git.repository).use { revWalk ->
-      val revObject = revWalk.parseAny(tagRef.objectId)
-      if (Constants.OBJ_TAG == revObject.type) {
-        val revTag = revObject as RevTag
-        return GitTagDto(
-          revTag.tagName, revTag.taggerIdent.getWhen().toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime()
-        )
-      } else if (Constants.OBJ_COMMIT == revObject.type) {
-        val revCommit = revObject as RevCommit
-        return GitTagDto(
-          revCommit.name, revCommit.authorIdent.getWhen().toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime()
-        )
-      } else {
-        throw Exception("Wrong Ref type, not OBJ_TAG or OBJ_COMMIT")
-      }
-    }
-  }
-
-  /**
-   * return repo latest tagRef
-   */
-  private fun getLatestTagRef(): Ref? {
-    var result: Ref? = null
-    var latestDate: Date? = null
-    val tagRefs = git.tagList().call()
-    for (tagRef in tagRefs) {
-      val currentDate: Date = getTagRefDate(tagRef)
-      if (latestDate == null || currentDate.after(latestDate)) {
-        result = tagRef
-        latestDate = currentDate
-      }
-    }
-    return result
-  }
-
-  /**
-   * get tagRef date
-   * for annotated tag is tag date
-   * for lightweight tag is commit date
-   */
-  private fun getTagRefDate(tagRef: Ref): Date {
-    RevWalk(git.repository).use { revWalk ->
-      val revObject = revWalk.parseAny(tagRef.objectId)
-      if (Constants.OBJ_TAG == revObject.type) {
-        val revTag = revObject as RevTag
-        return revTag.taggerIdent.getWhen()
-      } else if (Constants.OBJ_COMMIT == revObject.type) {
-        val revCommit = revObject as RevCommit
-        return revCommit.authorIdent.getWhen()
-      } else {
-        throw Exception("Wrong Ref type, not OBJ_TAG or OBJ_COMMIT")
-      }
-    }
-  }
 }
