@@ -1,14 +1,12 @@
 package `fun`.hydd.cdda_browser.verticles
 
 import `fun`.hydd.cdda_browser.dao.CddaVersionDao
-import `fun`.hydd.cdda_browser.dao.FileEntityDao
 import `fun`.hydd.cdda_browser.dao.JsonEntityDao
 import `fun`.hydd.cdda_browser.dto.GitHubReleaseDto
 import `fun`.hydd.cdda_browser.dto.GitTagDto
 import `fun`.hydd.cdda_browser.entity.CddaVersion
-import `fun`.hydd.cdda_browser.entity.FileEntity
-import `fun`.hydd.cdda_browser.entity.GetTextPo
 import `fun`.hydd.cdda_browser.server.CddaItemParseManager
+import `fun`.hydd.cdda_browser.server.GetTextPoServer
 import `fun`.hydd.cdda_browser.server.ModServer
 import `fun`.hydd.cdda_browser.util.GitUtil
 import `fun`.hydd.cdda_browser.util.HttpUtil
@@ -24,7 +22,6 @@ import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Paths
-import java.security.MessageDigest
 import java.time.LocalDateTime
 import javax.persistence.Persistence
 
@@ -46,27 +43,7 @@ class UpdateVerticle : CoroutineVerticle() {
       val cddaModDtoList = ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
       val cddaItemParseManager = CddaItemParseManager(vertx, cddaVersion, cddaModDtoList)
       cddaItemParseManager.parseAll(factory)
-
-      val codePathPairs = Paths.get(repoDir.absolutePath, "lang", "po").toFile().listFiles()
-        ?.filter { it.isFile && it.name.endsWith(".po") }
-        ?.map { Pair(it.name.replace("_", "-").replace(".po", ""), it.absolutePath) }
-      cddaVersion.pos = codePathPairs?.map {
-        val po = GetTextPo()
-        po.version = cddaVersion
-        po.language = it.first
-        val buffer = vertx.fileSystem().readFile(it.second).await().bytes
-        val messageDigest = MessageDigest.getInstance("SHA-256")
-        val hash = messageDigest.digest(buffer)
-        val hashCode = hash.fold("") { str, byte -> str + "%02x".format(byte) }
-        var fileEntity = FileEntityDao.findByHashCode(factory, hashCode)
-        if (fileEntity == null) {
-          fileEntity = FileEntity()
-          fileEntity.buffer = buffer.toTypedArray()
-          fileEntity.hashCode = hashCode
-        }
-        po.fileEntity = fileEntity
-        po
-      }!!.toMutableSet()
+      cddaVersion.pos = GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), factory, repoDir.absolutePath, cddaVersion)
       CddaVersionDao.save(factory, cddaVersion)
       log.info("\n" + JsonEntityDao.first(factory)!!.json!!.encodePrettily())
     }

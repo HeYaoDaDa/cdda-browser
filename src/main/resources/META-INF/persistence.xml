@@ -9,8 +9,8 @@
     <class>fun.hydd.cdda_browser.entity.CddaObject</class>
     <class>fun.hydd.cdda_browser.entity.CddaMod</class>
     <class>fun.hydd.cdda_browser.entity.CddaVersion</class>
-      <class>fun.hydd.cdda_browser.entity.JsonEntity</class>
-      <class>fun.hydd.cdda_browser.entity.GetTextPo</class>
+    <class>fun.hydd.cdda_browser.entity.JsonEntity</class>
+    <class>fun.hydd.cdda_browser.entity.GetTextPo</class>
     <class>fun.hydd.cdda_browser.entity.FileEntity</class>
 
     <properties>
@@ -25,8 +25,7 @@
                 value="wilson"/>
 
       <!-- The Vert.x SQL Client connection pool size -->
-      <property name="hibernate.connection.pool_size"
-                value="10"/>
+      <property name="hibernate.connection.pool_size" value="10"/>
 
       <!-- Automatic schema export -->
       <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
