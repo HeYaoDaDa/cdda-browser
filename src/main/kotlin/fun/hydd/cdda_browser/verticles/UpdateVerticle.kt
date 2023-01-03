@@ -43,7 +43,7 @@ class UpdateVerticle : CoroutineVerticle() {
     log.info("Need update version size is ${updateVersionList.size}")
     for (cddaVersion in updateVersionList) {
 //      GitUtil.hardRestToTag(git, cddaVersion.tagName!!)
-      val cddaModDtoList = ModServer.getCddaModDtoList(repoDir.absolutePath, vertx.fileSystem())
+      val cddaModDtoList = ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
       val cddaItemParseManager = CddaItemParseManager(vertx, cddaVersion, cddaModDtoList)
       cddaItemParseManager.parseAll(factory)
 

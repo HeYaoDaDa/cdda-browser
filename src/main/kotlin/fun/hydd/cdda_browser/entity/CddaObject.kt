@@ -22,7 +22,7 @@ open class CddaObject {
   @Column(name = "json_type", nullable = false)
   open var jsonType: JsonType? = null
 
-  @Enumerated
+  @Enumerated(EnumType.STRING)
   @Column(name = "cdda_type", nullable = false)
   open var cddaType: CddaType? = null
 

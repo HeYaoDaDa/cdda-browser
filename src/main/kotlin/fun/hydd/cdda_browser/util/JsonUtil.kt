@@ -1,9 +1,27 @@
 package `fun`.hydd.cdda_browser.util
 
+import io.vertx.core.file.FileSystem
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.coroutines.await
+import java.io.File
 
 object JsonUtil {
+  /**
+   * Get json file all JsonObject
+   *
+   * @param fileSystem vertx fileSystem
+   * @param file json file
+   * @return JsonObjects
+   */
+  suspend fun getJsonObjectsByFile(fileSystem: FileSystem, file: File): List<JsonObject> {
+    return when (val buffer = fileSystem.readFile(file.absolutePath).await().toJson()) {
+      is JsonArray -> buffer.mapNotNull { if (it is JsonObject) it else null }
+      is JsonObject -> listOf(buffer)
+      else -> throw Exception("Result class isn't JsonObject or JsonArray")
+    }
+  }
+
   /**
    * recursive sort jsonObject key-value by key, no parameter modification
    * @param jsonObject pending sort JsonObject

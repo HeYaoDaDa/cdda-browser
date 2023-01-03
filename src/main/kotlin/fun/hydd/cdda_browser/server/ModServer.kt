@@ -4,8 +4,8 @@ import `fun`.hydd.cdda_browser.constant.JsonType
 import `fun`.hydd.cdda_browser.dto.CddaJson
 import `fun`.hydd.cdda_browser.dto.CddaModDto
 import `fun`.hydd.cdda_browser.extension.getCollection
+import `fun`.hydd.cdda_browser.util.JsonUtil
 import io.vertx.core.file.FileSystem
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.*
@@ -17,17 +17,19 @@ object ModServer {
   private val log = LoggerFactory.getLogger(this.javaClass)
 
   /**
-   * Get repo /data/mods mod dto
+   * Get repo /data/mods sored mod dto list
    *
    * @param repoPath repo path
    * @param fileSystem vertx FileSystem
    * @return sorted CddaModDto list
    */
-  suspend fun getCddaModDtoList(repoPath: String, fileSystem: FileSystem): List<CddaModDto> = coroutineScope {
+  suspend fun getCddaModDtoList(fileSystem: FileSystem, repoPath: String): List<CddaModDto> = coroutineScope {
     log.info("Start getCddaModDtoList")
     val cddaMods = getModDirList(repoPath).map {
       async {
-        parserCddaModJsonObject(findModInfoJsonObjectByModDir(it, fileSystem), fileSystem, it, repoPath)
+        val mod = parserCddaModJsonObject(findModInfoJsonObjectByModDir(fileSystem, it), it)
+        if (mod != null) mod.cddaJsons = getCddaJsonsByMod(fileSystem, mod)
+        mod
       }
     }.awaitAll().mapNotNull { it }
     val sortedMods = sortMods(cddaMods)
@@ -47,7 +49,14 @@ object ModServer {
     return modsPath.listFiles()!!.filter { it.isDirectory }
   }
 
-  private suspend fun findModInfoJsonObjectByModDir(modDir: File, fileSystem: FileSystem): JsonObject? {
+  /**
+   * find modinfo.json for mod path
+   *
+   * @param fileSystem
+   * @param modDir
+   * @return
+   */
+  private suspend fun findModInfoJsonObjectByModDir(fileSystem: FileSystem, modDir: File): JsonObject? {
     val modinfoFile = modDir.listFiles()?.first { "modinfo.json" == it.name }
     return if (modinfoFile != null) {
       fileSystem.readFile(modinfoFile.absolutePath).await().toJsonArray()
@@ -60,12 +69,14 @@ object ModServer {
     }
   }
 
-  private suspend fun parserCddaModJsonObject(
-    jsonObject: JsonObject?,
-    fileSystem: FileSystem,
-    modDir: File,
-    repoPath: String
-  ): CddaModDto? {
+  /**
+   * parser MOD_INFO jsonObject build CddaModDto
+   *
+   * @param jsonObject
+   * @param modDir
+   * @return
+   */
+  private suspend fun parserCddaModJsonObject(jsonObject: JsonObject?, modDir: File): CddaModDto? {
     if (jsonObject == null) return null
     if (!JsonType.MOD_INFO.isEquals(jsonObject.getString("type"))) throw IllegalArgumentException("jsonObject type not is MOD_INFO")
     val modPaths = mutableSetOf(modDir)
@@ -75,7 +86,7 @@ object ModServer {
         modDir.toPath().resolve(path).toRealPath()
       }.toFile())
     }
-    val mod = CddaModDto(
+    return CddaModDto(
       jsonObject.getString("id"),
       jsonObject.getString("name"),
       jsonObject.getString("description"),
@@ -84,45 +95,42 @@ object ModServer {
       jsonObject.getCollection<String>("dependencies", listOf()).toHashSet(),
       modPaths
     )
-    mod.cddaJsons = coroutineScope {
-      mod.path.flatMap { getAllJsonFileInDir(it) }.map { file ->
-        async {
-          getJsonObjectsByFile(fileSystem, file).map { CddaJson.of(it, mod, file) }
-        }
-      }.awaitAll().flatten().filterNotNull().toSet()
-    }
-    return mod
   }
 
-  private suspend fun getJsonObjectsByFile(fileSystem: FileSystem, file: File): List<JsonObject> = coroutineScope {
-    when (val buffer = fileSystem.readFile(file.absolutePath).await().toJson()) {
-      is JsonArray -> {
-        buffer.mapNotNull { if (it is JsonObject) it else null }
+  /**
+   * get mod path's CddaJson
+   *
+   * @param fileSystem
+   * @param mod
+   */
+  private suspend fun getCddaJsonsByMod(fileSystem: FileSystem, mod: CddaModDto) = coroutineScope {
+    mod.path.flatMap { getAllJsonFileInDir(it) }.map { jsonFile ->
+      async {
+        JsonUtil.getJsonObjectsByFile(fileSystem, jsonFile).map { CddaJson.of(it, mod, jsonFile) }
       }
-
-      is JsonObject -> {
-        listOf(buffer)
-      }
-
-      else -> {
-        throw Exception("Return not is JsonObject or JsonArray")
-      }
-    }
+    }.awaitAll().flatten().filterNotNull().toSet()
   }
 
-  private fun getAllJsonFileInDir(dirPath: File): List<File> {
+
+  /**
+   * recursion get all json file for dir
+   *
+   * @param dirPath
+   * @return
+   */
+  private suspend fun getAllJsonFileInDir(dirPath: File): List<File> = coroutineScope {
     val result: MutableList<File> = ArrayList()
     val dirFiles = dirPath.listFiles()
     if (dirFiles != null && dirFiles.isNotEmpty()) {
-      for (file in dirFiles) {
-        if (file.isDirectory) {
-          result.addAll(getAllJsonFileInDir(file))
-        } else if (file.absolutePath.endsWith(".json")) {
-          result.add(file)
+      dirFiles.mapNotNull {
+        async {
+          if (it.isDirectory) result.addAll(getAllJsonFileInDir(it))
+          else if (it.absolutePath.endsWith(".json")) result.add(it)
+          else null
         }
-      }
+      }.awaitAll()
     }
-    return result
+    result
   }
 
   /**
@@ -131,11 +139,11 @@ object ModServer {
    * @return List<CddaMod>
    */
   private fun sortMods(mods: List<CddaModDto>): List<CddaModDto> {
-    val resultModIds = mutableListOf<String>();
+    val resultModIds = mutableListOf<String>()
     val myMods = mods.map { Pair(it.modId, it.depModIds.toMutableList()) }.toMutableList()
     while (myMods.isNotEmpty()) {
       val beforeSize = myMods.size
-      myMods.filter { it.second.isEmpty() }.map { resultModIds.add(it.first as String);myMods.remove(it) }
+      myMods.filter { it.second.isEmpty() }.map { resultModIds.add(it.first);myMods.remove(it) }
       myMods.map { it.second.removeIf { depModId -> resultModIds.contains(depModId) } }
       if (myMods.size == beforeSize) {
         break
