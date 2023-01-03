@@ -73,28 +73,6 @@ class UpdateVerticle : CoroutineVerticle() {
   }
 
 
-  private suspend fun getNeedUpdateVersions(): List<CddaVersion> {
-    val updateVersionList = mutableListOf<CddaVersion>()
-    val repoLatestVersionDto = getRepoLatestVersionDto()
-    if (repoLatestVersionDto != null) {
-      val dbLatestVersionDto = CddaVersionDao.getLatest(factory)
-      if (dbLatestVersionDto == null) {
-        updateVersionList.add(repoLatestVersionDto)
-      } else {
-        val dbLatestVersionDate = dbLatestVersionDto.tagDate
-        val repoLatestVersionDate = repoLatestVersionDto.tagDate
-        if (dbLatestVersionDate!!.isAfter(repoLatestVersionDate)) {
-          throw Exception("db version after repo version")
-        } else if (dbLatestVersionDate.isBefore(repoLatestVersionDate)) {
-          updateVersionList.addAll(getNeedUpdateVersionList(dbLatestVersionDate))
-        }
-      }
-    } else {
-      log.warn("No find repo tag!")
-    }
-    return updateVersionList
-  }
-
   /**
    * suspend init verticle
    *
@@ -131,43 +109,35 @@ class UpdateVerticle : CoroutineVerticle() {
     }.await()
   }
 
+  private suspend fun getNeedUpdateVersions(): List<CddaVersion> {
+    val updateVersionList = mutableListOf<CddaVersion>()
+    val repoLatestVersionDto = getRepoLatestVersionDto()
+    if (repoLatestVersionDto != null) {
+      val dbLatestVersionDto = CddaVersionDao.getLatest(factory)
+      if (dbLatestVersionDto == null) {
+        updateVersionList.add(repoLatestVersionDto)
+      } else {
+        val dbLatestVersionDate = dbLatestVersionDto.tagDate
+        val repoLatestVersionDate = repoLatestVersionDto.tagDate
+        if (dbLatestVersionDate!!.isAfter(repoLatestVersionDate)) {
+          throw Exception("db version after repo version")
+        } else if (dbLatestVersionDate.isBefore(repoLatestVersionDate)) {
+          updateVersionList.addAll(getNeedUpdateVersionList(dbLatestVersionDate))
+        }
+      }
+    } else {
+      log.warn("No find repo tag!")
+    }
+    return updateVersionList
+  }
+
   /**
    * Return latest CddaVersionDto for current repo status
    */
   private suspend fun getRepoLatestVersionDto(): CddaVersion? {
-    val gitTagDto = getLatestGitTagDto()
-    return if (gitTagDto != null) {
-      tag2CddaVersion(gitTagDto)
-    } else {
-      null
-    }
-  }
-
-  /**
-   * GitTag convert to CddaVersion
-   *
-   * @param tag
-   * @return
-   */
-  private suspend fun tag2CddaVersion(tag: GitTagDto): CddaVersion {
-    val releaseDto = getReleaseByTagName(tag.name)
-    return CddaVersion.of(tag, releaseDto)
-  }
-
-  /**
-   * By tag name get GitHub GithubReleaseDto
-   */
-  private suspend fun getReleaseByTagName(tagName: String): GitHubReleaseDto {
-    val requestOptions: RequestOptions =
-      RequestOptions().setHost("api.github.com").setURI("/repos/CleverRaven/Cataclysm-DDA/releases/tags/$tagName")
-        .setMethod(HttpMethod.GET).setPort(443).putHeader("User-Agent", "item-browser").setSsl(true)
-    val buffer = HttpUtil.request(vertx, requestOptions)
-    return if (buffer != null) {
-      val jsonObject: JsonObject = buffer.toJsonObject()
-      jsonObject.mapTo(GitHubReleaseDto::class.java)
-    } else {
-      throw Exception("Tag $tagName release response is null")
-    }
+    val tagRef = GitUtil.getLatestTagRef(git)
+    val gitTagDto = if (tagRef != null) GitTagDto(GitUtil.getRevObject(git, tagRef)) else null
+    return if (gitTagDto != null) getCddaVersionByGitTagDto(gitTagDto) else null
   }
 
   /**
@@ -186,17 +156,27 @@ class UpdateVerticle : CoroutineVerticle() {
       }
     }
     val afterTagList = result.sortedBy { it.date }
-    return afterTagList.map { tag2CddaVersion(it) }
+    return afterTagList.map { getCddaVersionByGitTagDto(it) }
   }
 
   /**
-   * return repo latest GitTagDto
+   * get CddaVersion by GitTagDto
+   *
+   * @param tag GitTagDto
+   * @return CddaVersion
    */
-  private fun getLatestGitTagDto(): GitTagDto? {
-    val tagRef = GitUtil.getLatestTagRef(git)
-    return if (tagRef != null)
-      GitTagDto(GitUtil.getRevObject(git, tagRef))
-    else null
+  private suspend fun getCddaVersionByGitTagDto(tag: GitTagDto): CddaVersion {
+    val requestOptions: RequestOptions =
+      RequestOptions().setHost("api.github.com").setURI("/repos/CleverRaven/Cataclysm-DDA/releases/tags/${tag.name}")
+        .setMethod(HttpMethod.GET).setPort(443).putHeader("User-Agent", "item-browser").setSsl(true)
+    val buffer = HttpUtil.request(vertx, requestOptions)
+    val releaseDto = if (buffer != null) {
+      val jsonObject: JsonObject = buffer.toJsonObject()
+      jsonObject.mapTo(GitHubReleaseDto::class.java)
+    } else {
+      throw Exception("Tag ${tag.name} release response is null")
+    }
+    return CddaVersion.of(tag, releaseDto)
   }
 
 }
