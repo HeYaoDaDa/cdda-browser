@@ -5,7 +5,6 @@ import `fun`.hydd.cdda_browser.dto.CddaItem
 import `fun`.hydd.cdda_browser.dto.CddaJson
 import `fun`.hydd.cdda_browser.dto.CddaModDto
 import `fun`.hydd.cdda_browser.entity.CddaVersion
-import io.vertx.core.Vertx
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -14,13 +13,11 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class CddaItemParseManager(
-  private val vertx: Vertx,
   private val version: CddaVersion,
   private val mods: Collection<CddaModDto>
 ) {
   private val pendQueue: PendQueue = PendQueue(mods)
   private val finalQueue: FinalQueue = FinalQueue()
-  private val deferQueue: DeferQueue = DeferQueue()
   private val log = LoggerFactory.getLogger(this.javaClass)
 
   private class PendQueue(mods: Collection<CddaModDto>) {
@@ -124,19 +121,16 @@ class CddaItemParseManager(
 
   suspend fun parseAll(factory: Stage.SessionFactory) = coroutineScope {
     val result = mods.map { mod ->
+      val deferQueue = DeferQueue()
       deferQueue.typeIdItemsMap.clear()
       for (cddaType in CddaType.values()) {
         val cddaJsons = pendQueue.pop(mod, cddaType)
         val cddaItems = cddaJsons.map { async { convertCddaItems(it) } }.awaitAll().flatten()
-        parseCddaItems(cddaItems, mod)
+        parseCddaItems(deferQueue, cddaItems, mod)
       }
       val deferCddaItem = deferQueue.typeIdItemsMap.values.map { it.values.flatten() }.flatten()
       log.info(
-        "mod ${mod.modId} defer item size is ${deferCddaItem.size}, final size is ${
-          finalQueue.getModItemsSize(
-            mod
-          )
-        }"
+        "mod ${mod.modId} defer item size is ${deferCddaItem.size}, final size is ${finalQueue.getModItemsSize(mod)}"
       )
       if (deferCddaItem.isNotEmpty()) {
         deferCddaItem.forEach {
@@ -152,6 +146,7 @@ class CddaItemParseManager(
   }
 
   private fun parseCddaItems(
+    deferQueue: DeferQueue,
     cddaItems: Collection<CddaItem>,
     mod: CddaModDto
   ) {
@@ -166,7 +161,7 @@ class CddaItemParseManager(
           else {
             finalQueue.add(cddaItem)
             val deferItems = deferQueue.pop(cddaItem.cddaType, cddaItem.id)
-            if (deferItems.isNotEmpty()) parseCddaItems(deferItems, mod)
+            if (deferItems.isNotEmpty()) parseCddaItems(deferQueue, deferItems, mod)
           }
         } else {
           deferQueue.add(cddaItem, cddaItem.cddaType, cddaItem.copyFrom)
@@ -177,7 +172,7 @@ class CddaItemParseManager(
         else {
           finalQueue.add(cddaItem)
           val deferItems = deferQueue.pop(cddaItem.cddaType, cddaItem.id)
-          if (deferItems.isNotEmpty()) parseCddaItems(deferItems, mod)
+          if (deferItems.isNotEmpty()) parseCddaItems(deferQueue, deferItems, mod)
         }
       }
     }

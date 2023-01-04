@@ -41,7 +41,7 @@ class UpdateVerticle : CoroutineVerticle() {
     for (cddaVersion in updateVersionList) {
 //      GitUtil.hardRestToTag(git, cddaVersion.tagName!!)
       val cddaModDtoList = ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
-      val cddaItemParseManager = CddaItemParseManager(vertx, cddaVersion, cddaModDtoList)
+      val cddaItemParseManager = CddaItemParseManager(cddaVersion, cddaModDtoList)
       cddaItemParseManager.parseAll(factory)
       cddaVersion.pos = GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), factory, repoDir.absolutePath, cddaVersion)
       CddaVersionDao.save(factory, cddaVersion)
