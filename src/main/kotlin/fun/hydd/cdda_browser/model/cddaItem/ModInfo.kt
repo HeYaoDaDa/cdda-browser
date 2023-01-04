@@ -1,7 +1,12 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import `fun`.hydd.cdda_browser.dto.*
+import `fun`.hydd.cdda_browser.model.base.CddaItem
+import `fun`.hydd.cdda_browser.model.base.CddaItemRef
+import `fun`.hydd.cdda_browser.model.base.CddaJson
+import `fun`.hydd.cdda_browser.model.base.Translation
+import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
+import `fun`.hydd.cdda_browser.model.base.parent.CddaItemParser
 import io.vertx.core.json.JsonArray
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -1,4 +1,4 @@
-package `fun`.hydd.cdda_browser.dto
+package `fun`.hydd.cdda_browser.model.base
 
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.revwalk.RevCommit

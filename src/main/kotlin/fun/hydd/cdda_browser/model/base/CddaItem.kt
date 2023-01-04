@@ -1,4 +1,4 @@
-package `fun`.hydd.cdda_browser.dto
+package `fun`.hydd.cdda_browser.model.base
 
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
@@ -9,6 +9,7 @@ import `fun`.hydd.cdda_browser.entity.JsonEntity
 import `fun`.hydd.cdda_browser.extension.getCollection
 import `fun`.hydd.cdda_browser.extension.getHashString
 import `fun`.hydd.cdda_browser.extension.getTranslation
+import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
 import io.vertx.core.json.JsonObject
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory

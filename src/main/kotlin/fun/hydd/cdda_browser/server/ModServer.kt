@@ -1,9 +1,9 @@
 package `fun`.hydd.cdda_browser.server
 
 import `fun`.hydd.cdda_browser.constant.JsonType
-import `fun`.hydd.cdda_browser.dto.CddaJson
-import `fun`.hydd.cdda_browser.dto.CddaModDto
 import `fun`.hydd.cdda_browser.extension.getCollection
+import `fun`.hydd.cdda_browser.model.base.CddaJson
+import `fun`.hydd.cdda_browser.model.base.CddaModDto
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import io.vertx.core.file.FileSystem
 import io.vertx.core.json.JsonObject

@@ -1,8 +1,8 @@
 package `fun`.hydd.cdda_browser.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
-import `fun`.hydd.cdda_browser.dto.GitHubReleaseDto
-import `fun`.hydd.cdda_browser.dto.GitTagDto
+import `fun`.hydd.cdda_browser.model.base.GitHubReleaseDto
+import `fun`.hydd.cdda_browser.model.base.GitTagDto
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import javax.persistence.*

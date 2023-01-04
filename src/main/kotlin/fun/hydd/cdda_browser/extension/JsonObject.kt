@@ -1,6 +1,6 @@
 package `fun`.hydd.cdda_browser.extension
 
-import `fun`.hydd.cdda_browser.dto.Translation
+import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
 import io.vertx.core.json.JsonObject

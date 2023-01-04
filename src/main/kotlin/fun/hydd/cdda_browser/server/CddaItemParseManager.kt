@@ -1,10 +1,10 @@
 package `fun`.hydd.cdda_browser.server
 
 import `fun`.hydd.cdda_browser.constant.CddaType
-import `fun`.hydd.cdda_browser.dto.CddaItem
-import `fun`.hydd.cdda_browser.dto.CddaJson
-import `fun`.hydd.cdda_browser.dto.CddaModDto
 import `fun`.hydd.cdda_browser.entity.CddaVersion
+import `fun`.hydd.cdda_browser.model.base.CddaItem
+import `fun`.hydd.cdda_browser.model.base.CddaJson
+import `fun`.hydd.cdda_browser.model.base.CddaModDto
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope

@@ -1,4 +1,4 @@
-package `fun`.hydd.cdda_browser.dto
+package `fun`.hydd.cdda_browser.model.base
 
 import io.vertx.core.json.JsonObject
 import java.lang.instrument.IllegalClassFormatException

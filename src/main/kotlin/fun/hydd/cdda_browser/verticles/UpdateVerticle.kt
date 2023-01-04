@@ -2,9 +2,9 @@ package `fun`.hydd.cdda_browser.verticles
 
 import `fun`.hydd.cdda_browser.dao.CddaVersionDao
 import `fun`.hydd.cdda_browser.dao.JsonEntityDao
-import `fun`.hydd.cdda_browser.dto.GitHubReleaseDto
-import `fun`.hydd.cdda_browser.dto.GitTagDto
 import `fun`.hydd.cdda_browser.entity.CddaVersion
+import `fun`.hydd.cdda_browser.model.base.GitHubReleaseDto
+import `fun`.hydd.cdda_browser.model.base.GitTagDto
 import `fun`.hydd.cdda_browser.server.CddaItemParseManager
 import `fun`.hydd.cdda_browser.server.GetTextPoServer
 import `fun`.hydd.cdda_browser.server.ModServer

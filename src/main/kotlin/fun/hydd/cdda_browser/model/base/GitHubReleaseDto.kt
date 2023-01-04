@@ -1,4 +1,4 @@
-package `fun`.hydd.cdda_browser.dto
+package `fun`.hydd.cdda_browser.model.base
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
