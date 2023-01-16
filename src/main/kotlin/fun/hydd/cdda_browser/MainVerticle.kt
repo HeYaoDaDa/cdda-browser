@@ -1,22 +1,28 @@
 package `fun`.hydd.cdda_browser
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import `fun`.hydd.cdda_browser.verticles.GitRepoVerticle
 import `fun`.hydd.cdda_browser.verticles.UpdateVerticle
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.Promise
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.json.jackson.DatabindCodec
+import io.vertx.kotlin.coroutines.CoroutineVerticle
+import io.vertx.kotlin.coroutines.await
+import java.util.concurrent.TimeUnit
 
-class MainVerticle : AbstractVerticle() {
+class MainVerticle : CoroutineVerticle() {
 
-  override fun start(startPromise: Promise<Void>) {
+  override suspend fun start() {
     registerDataTypeModule()
-    vertx.deployVerticle(UpdateVerticle()).onComplete {
-      startPromise.complete()
-    }.onFailure {
-      it.printStackTrace()
-    }.onComplete {
-      vertx.close()
-    }
+    vertx.deployVerticle(
+      GitRepoVerticle(),
+      DeploymentOptions()
+        .setWorker(true)
+        .setWorkerPoolName("git-repo-pool")
+        .setMaxWorkerExecuteTime(80)
+        .setMaxWorkerExecuteTimeUnit(TimeUnit.SECONDS)
+    )
+      .await()
+    vertx.deployVerticle(UpdateVerticle()).await()
   }
 
   /**

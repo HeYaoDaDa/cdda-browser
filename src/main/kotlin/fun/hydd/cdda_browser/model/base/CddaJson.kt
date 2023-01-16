@@ -25,9 +25,12 @@ class CddaJson(
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
+    private val missJsonTypes = mutableSetOf<String>()
+
     fun of(jsonObject: JsonObject, mod: CddaModDto, path: File): CddaJson? {
       return if (jsonObject.containsKey("type")) {
         val type = jsonObject.getString("type")
+        if (missJsonTypes.contains(type)) return null
         try {
           val jsonType = JsonType.valueOf(type)
           val cddaType = CddaType.values().first { it.jsonType.contains(jsonType) }
@@ -45,6 +48,7 @@ class CddaJson(
             jsonObject.getJsonObject("delete")
           )
         } catch (e: IllegalArgumentException) {
+          missJsonTypes.add(type)
           log.warn("$type not exits in JsonType")
           null
         }

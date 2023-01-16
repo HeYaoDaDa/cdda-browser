@@ -14,10 +14,7 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.RequestOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.CoroutineVerticle
-import io.vertx.kotlin.coroutines.await
 import io.vertx.kotlin.coroutines.awaitBlocking
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.Constants
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -28,18 +25,17 @@ import javax.persistence.Persistence
 
 class UpdateVerticle : CoroutineVerticle() {
   private val log = LoggerFactory.getLogger(this.javaClass)
-  private lateinit var git: Git
   private lateinit var factory: Stage.SessionFactory
   private val repoDir: File = Paths.get(System.getProperty("user.home"), "Documents", "Cataclysm-DDA").toFile()
 
   override suspend fun start() {
     super.start()
     init()
-//    GitUtil.update(git)
+    GitUtil.update(vertx.eventBus())
     val updateVersionList = getNeedUpdateVersions()
     log.info("Need update version size is ${updateVersionList.size}")
     for (cddaVersion in updateVersionList) {
-//      GitUtil.hardRestToTag(git, cddaVersion.tagName!!)
+      GitUtil.hardRestToTag(vertx.eventBus(), cddaVersion.tagName!!)
       val cddaModDtoList = ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
       val cddaItemParseManager = CddaItemParseManager(cddaVersion, cddaModDtoList)
       cddaItemParseManager.parseAll(factory)
@@ -47,6 +43,7 @@ class UpdateVerticle : CoroutineVerticle() {
       CddaVersionDao.save(factory, cddaVersion)
       log.info("\n" + JsonEntityDao.first(factory)!!.json!!.encodePrettily())
     }
+    vertx.close()
   }
 
 
@@ -59,31 +56,7 @@ class UpdateVerticle : CoroutineVerticle() {
     factory = awaitBlocking {
       Persistence.createEntityManagerFactory("cdda-browser").unwrap(Stage.SessionFactory::class.java)
     }
-    git = initGitRepo()
     log.info("End init")
-  }
-
-  /**
-   * Init git repo
-   *
-   * @return
-   */
-  private suspend fun initGitRepo(): Git {
-    log.info("Start initGit")
-    log.info("Repo path is $repoDir")
-    return vertx.executeBlocking {
-      if (repoDir.exists()) {
-        log.info("Repo is exists")
-        it.complete(Git.open(repoDir))
-      } else {
-        log.info("Repo is not exists")
-        it.complete(
-          Git.cloneRepository().setDirectory(repoDir).setURI("https://github.com/CleverRaven/Cataclysm-DDA.git")
-            .setBranch(Constants.MASTER).call()
-        )
-      }
-      log.info("End initGit")
-    }.await()
   }
 
   private suspend fun getNeedUpdateVersions(): List<CddaVersion> {
@@ -112,8 +85,8 @@ class UpdateVerticle : CoroutineVerticle() {
    * Return latest CddaVersionDto for current repo status
    */
   private suspend fun getRepoLatestVersionDto(): CddaVersion? {
-    val tagRef = GitUtil.getLatestTagRef(git)
-    val gitTagDto = if (tagRef != null) GitTagDto(GitUtil.getRevObject(git, tagRef)) else null
+    val tagRef = GitUtil.getLatestRevObject(vertx.eventBus())
+    val gitTagDto = if (tagRef != null) GitTagDto(tagRef) else null
     return if (gitTagDto != null) getCddaVersionByGitTagDto(gitTagDto) else null
   }
 
@@ -124,10 +97,10 @@ class UpdateVerticle : CoroutineVerticle() {
    * @return
    */
   private suspend fun getNeedUpdateVersionList(date: LocalDateTime): List<CddaVersion> {
-    val localRefs = git.tagList().call()
+    val localRefs = GitUtil.getTagList(vertx.eventBus())
     val result = ArrayList<GitTagDto>()
     for (localRef in localRefs) {
-      val gitTagDto = GitTagDto(GitUtil.getRevObject(git, localRef))
+      val gitTagDto = GitTagDto(GitUtil.getRevObject(vertx.eventBus(), localRef))
       if (gitTagDto.date.isAfter(date)) {
         result.add(gitTagDto)
       }
