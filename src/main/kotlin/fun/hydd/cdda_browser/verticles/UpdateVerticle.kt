@@ -15,6 +15,9 @@ import io.vertx.core.http.RequestOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.awaitBlocking
+import io.vertx.kotlin.coroutines.dispatcher
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -31,6 +34,10 @@ class UpdateVerticle : CoroutineVerticle() {
   override suspend fun start() {
     super.start()
     init()
+    vertx.setTimer(1_000) { GlobalScope.launch(vertx.dispatcher()) { update() } }
+  }
+
+  private suspend fun update() {
     GitUtil.update(vertx.eventBus())
     val updateVersionList = getNeedUpdateVersions()
     log.info("Need update version size is ${updateVersionList.size}")
