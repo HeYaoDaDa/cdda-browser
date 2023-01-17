@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.util
 
 import `fun`.hydd.cdda_browser.constant.EventBusConstant
+import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.EventBus
 import io.vertx.kotlin.coroutines.await
 import org.eclipse.jgit.lib.Ref
@@ -16,8 +17,8 @@ object GitUtil {
    *
    * @param eventBus
    */
-  fun update(eventBus: EventBus) {
-    eventBus.request<Unit>(EventBusConstant.GIT_REPO_UPDATE, null)
+  suspend fun update(eventBus: EventBus) {
+    eventBus.request<Unit>(EventBusConstant.GIT_REPO_UPDATE, null, DeliveryOptions().setSendTimeout(60_000)).await()
   }
 
   /**
@@ -26,8 +27,8 @@ object GitUtil {
    * @param eventBus
    * @param tagName rest to tag name
    */
-  fun hardRestToTag(eventBus: EventBus, tagName: String) {
-    eventBus.request<Unit>(EventBusConstant.GIT_REPO_HARD_REST_TO_TAG, tagName)
+  suspend fun hardRestToTag(eventBus: EventBus, tagName: String) {
+    eventBus.request<Unit>(EventBusConstant.GIT_REPO_HARD_REST_TO_TAG, tagName).await()
   }
 
   /**
