@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import `fun`.hydd.cdda_browser.model.codec.UnitCodec
 import `fun`.hydd.cdda_browser.verticles.GitRepoVerticle
 import `fun`.hydd.cdda_browser.verticles.UpdateVerticle
 import io.vertx.core.DeploymentOptions
@@ -13,6 +14,7 @@ class MainVerticle : CoroutineVerticle() {
 
   override suspend fun start() {
     registerDataTypeModule()
+    vertx.eventBus().registerDefaultCodec(Unit.javaClass, UnitCodec())
     vertx.deployVerticle(
       GitRepoVerticle(),
       DeploymentOptions()

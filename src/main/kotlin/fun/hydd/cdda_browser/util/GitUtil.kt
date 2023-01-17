@@ -17,7 +17,7 @@ object GitUtil {
    * @param eventBus
    */
   fun update(eventBus: EventBus) {
-    eventBus.send(EventBusConstant.GIT_REPO_UPDATE, null)
+    eventBus.request<Unit>(EventBusConstant.GIT_REPO_UPDATE, null)
   }
 
   /**
@@ -27,7 +27,7 @@ object GitUtil {
    * @param tagName rest to tag name
    */
   fun hardRestToTag(eventBus: EventBus, tagName: String) {
-    eventBus.send(EventBusConstant.GIT_REPO_HARD_REST_TO_TAG, tagName)
+    eventBus.request<Unit>(EventBusConstant.GIT_REPO_HARD_REST_TO_TAG, tagName)
   }
 
   /**

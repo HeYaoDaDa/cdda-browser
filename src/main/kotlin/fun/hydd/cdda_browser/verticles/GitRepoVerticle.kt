@@ -28,10 +28,10 @@ class GitRepoVerticle : CoroutineVerticle() {
     init()
     val eventBus = vertx.eventBus()
     eventBus.consumer<Unit>(EventBusConstant.GIT_REPO_UPDATE) {
-      update()
+      it.reply(update())
     }
     eventBus.consumer(EventBusConstant.GIT_REPO_HARD_REST_TO_TAG) {
-      hardRestToTag(it.body())
+      it.reply(hardRestToTag(it.body()))
     }
     eventBus.consumer(EventBusConstant.GIT_REPO_GET_REV_OBJECT) {
       it.reply(getRevObject(it.body()))
