@@ -1,10 +1,13 @@
 package `fun`.hydd.cdda_browser.model.base
 
+import com.googlecode.jmapper.JMapper
+import com.googlecode.jmapper.annotations.JGlobalMap
+import com.googlecode.jmapper.annotations.JMap
+import com.googlecode.jmapper.enums.ChooseConfig
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
 import `fun`.hydd.cdda_browser.dao.JsonEntityDao
-import `fun`.hydd.cdda_browser.entity.CddaMod
-import `fun`.hydd.cdda_browser.entity.CddaObject
+import `fun`.hydd.cdda_browser.entity.CddaItem
 import `fun`.hydd.cdda_browser.entity.JsonEntity
 import `fun`.hydd.cdda_browser.extension.getCollection
 import `fun`.hydd.cdda_browser.extension.getHashString
@@ -15,21 +18,31 @@ import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class CddaItem(
-  val jsonType: JsonType,
-  val cddaType: CddaType,
-  var id: String,
-  val mod: CddaModDto,
-  val path: File,
-  val json: JsonObject,
+@JGlobalMap(classes = [CddaJsonParseDto::class], excluded = ["id", "data", "log"])
+class CddaItemParseDto() {
+  @JMap(classes = [CddaItem::class])
+  lateinit var jsonType: JsonType
 
-  val copyFrom: String?,
-  val abstract: Boolean,
-  val relative: JsonObject?,
-  val proportional: JsonObject?,
-  val extend: JsonObject?,
-  val delete: JsonObject?,
-) {
+  @JMap(classes = [CddaItem::class])
+  lateinit var cddaType: CddaType
+
+  lateinit var mod: CddaModParseDto
+
+  // not is db primary key
+  @JMap(value = "cddaId", classes = [CddaItem::class])
+  lateinit var id: String
+
+  lateinit var path: File
+
+  lateinit var json: JsonObject
+
+  var copyFrom: String? = null
+  var abstract: Boolean = false
+  var relative: JsonObject? = null
+  var proportional: JsonObject? = null
+  var extend: JsonObject? = null
+  var delete: JsonObject? = null
+
   var data: CddaItemData? = null
 
   private val log = LoggerFactory.getLogger(this.javaClass)
@@ -83,7 +96,7 @@ class CddaItem(
     var result = if (json.containsKey(key)) json.getCollection<T>(key)?.toMutableList()
     else (parentValue)?.toMutableList()
     if (extend != null) {
-      val extendValue = extend.getCollection<T>(key)
+      val extendValue = extend!!.getCollection<T>(key)
       if (extendValue != null) {
         if (result != null) result.addAll(extendValue)
         else result = extendValue.toMutableList()
@@ -91,7 +104,7 @@ class CddaItem(
     }
     if (result != null) {
       if (delete != null) {
-        val deleteValue = delete.getCollection<T>(key)
+        val deleteValue = delete!!.getCollection<T>(key)
         if (deleteValue != null) result.removeAll(deleteValue)
       }
     }
@@ -106,13 +119,13 @@ class CddaItem(
     val result = if (json.containsKey(key)) json.getCollection(key, def).toMutableList()
     else (parentValue ?: def).toMutableList()
     if (extend != null) {
-      val extendValue = extend.getCollection<T>(key)
+      val extendValue = extend!!.getCollection<T>(key)
       if (extendValue != null) {
         result.addAll(extendValue)
       }
     }
     if (delete != null) {
-      val deleteValue = delete.getCollection<T>(key)
+      val deleteValue = delete!!.getCollection<T>(key)
       if (deleteValue != null) result.removeAll(deleteValue)
     }
     return result
@@ -121,13 +134,13 @@ class CddaItem(
   private fun processDoubleProportionalAndRelative(value: Double, key: String): Double {
     var result = value
     if (proportional != null) {
-      val proportionalValue = proportional.getDouble(key, 1.0)
+      val proportionalValue = proportional!!.getDouble(key, 1.0)
       if (proportionalValue != null) {
         result = processProportion(result, proportionalValue, key)
       }
     }
     if (relative != null) {
-      val relativeValue = relative.getDouble(key, 0.0)
+      val relativeValue = relative!!.getDouble(key, 0.0)
       if (relativeValue != null) {
         result += relativeValue
       }
@@ -147,11 +160,10 @@ class CddaItem(
     return true
   }
 
-  suspend fun toEntity(factory: Stage.SessionFactory, cddaMod: CddaMod): CddaObject {
-    val cddaObject = CddaObject()
-    cddaObject.jsonType = this.jsonType
-    cddaObject.cddaType = this.cddaType
-    cddaObject.cddaMod = cddaMod
+  suspend fun toEntity(factory: Stage.SessionFactory): CddaItem {
+    val jMapper = JMapper(CddaItem::class.java, CddaItemParseDto::class.java, ChooseConfig.SOURCE)
+    val cddaItem = jMapper.getDestination(this)
+    cddaItem.path = this.path.absolutePath// todo change to relative path
 
     val originalJsonHash = this.json.getHashString()
     var originalJsonEntity = JsonEntityDao.findByHashCode(factory, originalJsonHash)
@@ -160,8 +172,8 @@ class CddaItem(
       originalJsonEntity.json = this.json
       originalJsonEntity.hashCode = originalJsonHash
     }
+    cddaItem.originalJson = originalJsonEntity
 
-    cddaObject.originalJson = originalJsonEntity
     val json = JsonObject.mapFrom(this.data!!)
     val jsonHash = json.getHashString()
     var jsonEntity = JsonEntityDao.findByHashCode(factory, jsonHash)
@@ -170,7 +182,7 @@ class CddaItem(
       jsonEntity.json = json
       jsonEntity.hashCode = jsonHash
     }
-    cddaObject.json = jsonEntity
-    return cddaObject
+    cddaItem.json = jsonEntity
+    return cddaItem
   }
 }

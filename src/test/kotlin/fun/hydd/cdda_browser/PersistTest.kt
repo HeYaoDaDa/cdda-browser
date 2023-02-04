@@ -4,7 +4,7 @@ import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
 import `fun`.hydd.cdda_browser.constant.JsonType
 import `fun`.hydd.cdda_browser.entity.CddaMod
-import `fun`.hydd.cdda_browser.entity.CddaObject
+import `fun`.hydd.cdda_browser.entity.CddaItem
 import `fun`.hydd.cdda_browser.entity.CddaVersion
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -41,10 +41,10 @@ class PersistTest {
       cddaMod.depModIds = mutableSetOf("dda")
       cddaMod.cddaVersion = cddaVersion
       cddaVersion.cddaMods.add(cddaMod)
-      val cddaObject = CddaObject()
-      cddaObject.jsonType = JsonType.MOD_INFO
-      cddaObject.cddaType = CddaType.MOD_INFO
-      cddaMod.cddaObjects.add(cddaObject)
+      val cddaItem = CddaItem()
+      cddaItem.jsonType = JsonType.MOD_INFO
+      cddaItem.cddaType = CddaType.MOD_INFO
+      cddaMod.cddaItems.add(cddaItem)
       val toCompletableFuture = emf.withTransaction { _, _ ->
         emf.withTransaction { session, _ -> session.persist(cddaVersion) }
       }.toCompletableFuture()

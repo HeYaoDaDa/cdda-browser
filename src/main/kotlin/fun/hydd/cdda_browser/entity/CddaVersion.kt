@@ -1,10 +1,7 @@
 package `fun`.hydd.cdda_browser.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
-import `fun`.hydd.cdda_browser.model.base.GitHubReleaseDto
-import `fun`.hydd.cdda_browser.model.base.GitTagDto
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import javax.persistence.*
 
 @Entity
@@ -42,23 +39,4 @@ open class CddaVersion() {
 
   @OneToMany(mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
   open var pos: MutableSet<GetTextPo> = mutableSetOf()
-
-  companion object {
-    @JvmStatic
-    fun of(tag: GitTagDto, release: GitHubReleaseDto): CddaVersion {
-      if (tag.name != release.tagName) throw Exception("Tag and release not match")
-      val result = CddaVersion()
-      result.releaseName = release.name
-      result.commitHash = release.commitHash
-      result.experiment = release.isExperiment
-      result.releaseDate = release.date.toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime()
-
-      result.tagName = tag.name
-      result.tagDate = tag.date
-
-      result.status = CddaVersionStatus.STOP
-      result.cddaMods = mutableSetOf()
-      return result
-    }
-  }
 }

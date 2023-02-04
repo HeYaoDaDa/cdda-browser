@@ -1,11 +1,11 @@
 package `fun`.hydd.cdda_browser.verticles
 
+import `fun`.hydd.cdda_browser.constant.EventBusConstant
 import `fun`.hydd.cdda_browser.dao.CddaVersionDao
 import `fun`.hydd.cdda_browser.dao.JsonEntityDao
-import `fun`.hydd.cdda_browser.entity.CddaVersion
+import `fun`.hydd.cdda_browser.model.base.CddaVersionParseDto
 import `fun`.hydd.cdda_browser.model.base.GitHubReleaseDto
 import `fun`.hydd.cdda_browser.model.base.GitTagDto
-import `fun`.hydd.cdda_browser.server.CddaItemParseManager
 import `fun`.hydd.cdda_browser.server.GetTextPoServer
 import `fun`.hydd.cdda_browser.server.ModServer
 import `fun`.hydd.cdda_browser.util.GitUtil
@@ -14,9 +14,8 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.RequestOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.CoroutineVerticle
+import io.vertx.kotlin.coroutines.await
 import io.vertx.kotlin.coroutines.awaitBlocking
-import io.vertx.kotlin.coroutines.dispatcher
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
@@ -34,19 +33,22 @@ class UpdateVerticle : CoroutineVerticle() {
   override suspend fun start() {
     super.start()
     init()
-    vertx.setTimer(1_000) { GlobalScope.launch(vertx.dispatcher()) { update() } }
+    vertx.setTimer(1_000) { launch() { update() } }
   }
 
   private suspend fun update() {
-    GitUtil.update(vertx.eventBus())
+//    GitUtil.update(vertx.eventBus())
     val updateVersionList = getNeedUpdateVersions()
     log.info("Need update version size is ${updateVersionList.size}")
-    for (cddaVersion in updateVersionList) {
-      GitUtil.hardRestToTag(vertx.eventBus(), cddaVersion.tagName!!)
+    for (cddaVersionParseDto in updateVersionList) {
+      GitUtil.hardRestToTag(vertx.eventBus(), cddaVersionParseDto.tagName)
       val cddaModDtoList = ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
-      val cddaItemParseManager = CddaItemParseManager(cddaVersion, cddaModDtoList)
-      cddaItemParseManager.parseAll(factory)
-      cddaVersion.pos = GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), factory, repoDir.absolutePath, cddaVersion)
+      cddaVersionParseDto.cddaMods.addAll(cddaModDtoList)
+      val cddaVersion = vertx.eventBus()
+        .request<JsonObject>(EventBusConstant.CDDA_ITEM_PARSER_GET_TAG_LIST, JsonObject.mapFrom(cddaVersionParseDto))
+        .await().body().mapTo(CddaVersionParseDto::class.java).toEntity(factory)
+      cddaVersion.pos =
+        GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), factory, repoDir.absolutePath, cddaVersion)
       CddaVersionDao.save(factory, cddaVersion)
       log.info("\n" + JsonEntityDao.first(factory)!!.json!!.encodePrettily())
     }
@@ -66,17 +68,17 @@ class UpdateVerticle : CoroutineVerticle() {
     log.info("End init")
   }
 
-  private suspend fun getNeedUpdateVersions(): List<CddaVersion> {
-    val updateVersionList = mutableListOf<CddaVersion>()
+  private suspend fun getNeedUpdateVersions(): List<CddaVersionParseDto> {
+    val updateVersionList = mutableListOf<CddaVersionParseDto>()
     val repoLatestVersionDto = getRepoLatestVersionDto()
     if (repoLatestVersionDto != null) {
       val dbLatestVersionDto = CddaVersionDao.getLatest(factory)
       if (dbLatestVersionDto == null) {
         updateVersionList.add(repoLatestVersionDto)
       } else {
-        val dbLatestVersionDate = dbLatestVersionDto.tagDate
+        val dbLatestVersionDate = dbLatestVersionDto.tagDate!!
         val repoLatestVersionDate = repoLatestVersionDto.tagDate
-        if (dbLatestVersionDate!!.isAfter(repoLatestVersionDate)) {
+        if (dbLatestVersionDate.isAfter(repoLatestVersionDate)) {
           throw Exception("db version after repo version")
         } else if (dbLatestVersionDate.isBefore(repoLatestVersionDate)) {
           updateVersionList.addAll(getNeedUpdateVersionList(dbLatestVersionDate))
@@ -91,7 +93,7 @@ class UpdateVerticle : CoroutineVerticle() {
   /**
    * Return latest CddaVersionDto for current repo status
    */
-  private suspend fun getRepoLatestVersionDto(): CddaVersion? {
+  private suspend fun getRepoLatestVersionDto(): CddaVersionParseDto? {
     val tagRef = GitUtil.getLatestRevObject(vertx.eventBus())
     val gitTagDto = if (tagRef != null) GitTagDto(tagRef) else null
     return if (gitTagDto != null) getCddaVersionByGitTagDto(gitTagDto) else null
@@ -103,7 +105,7 @@ class UpdateVerticle : CoroutineVerticle() {
    * @param date
    * @return
    */
-  private suspend fun getNeedUpdateVersionList(date: LocalDateTime): List<CddaVersion> {
+  private suspend fun getNeedUpdateVersionList(date: LocalDateTime): List<CddaVersionParseDto> {
     val localRefs = GitUtil.getTagList(vertx.eventBus())
     val result = ArrayList<GitTagDto>()
     for (localRef in localRefs) {
@@ -122,7 +124,7 @@ class UpdateVerticle : CoroutineVerticle() {
    * @param tag GitTagDto
    * @return CddaVersion
    */
-  private suspend fun getCddaVersionByGitTagDto(tag: GitTagDto): CddaVersion {
+  private suspend fun getCddaVersionByGitTagDto(tag: GitTagDto): CddaVersionParseDto {
     val requestOptions: RequestOptions =
       RequestOptions().setHost("api.github.com").setURI("/repos/CleverRaven/Cataclysm-DDA/releases/tags/${tag.name}")
         .setMethod(HttpMethod.GET).setPort(443).putHeader("User-Agent", "item-browser").setSsl(true)
@@ -133,7 +135,7 @@ class UpdateVerticle : CoroutineVerticle() {
     } else {
       throw Exception("Tag ${tag.name} release response is null")
     }
-    return CddaVersion.of(tag, releaseDto)
+    return CddaVersionParseDto.of(tag, releaseDto)
   }
 
 }

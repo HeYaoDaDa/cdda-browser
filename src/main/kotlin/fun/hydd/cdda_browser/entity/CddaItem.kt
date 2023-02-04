@@ -6,13 +6,12 @@ import org.hibernate.Hibernate
 import javax.persistence.*
 
 @Entity
-@Table(name = "cdda_object")
-open class CddaObject {
+@Table(name = "cdda_item")
+open class CddaItem {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id", nullable = false)
   open var id: Long? = null
-
 
   @ManyToOne
   @JoinColumn(name = "cdda_mod_id")
@@ -26,6 +25,13 @@ open class CddaObject {
   @Column(name = "cdda_type", nullable = false)
   open var cddaType: CddaType? = null
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "cdda_id", nullable = false)
+  open var cddaId: String? = null
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "path", nullable = false)
+  open var path: String? = null
 
   @ManyToOne(
     cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
@@ -45,7 +51,7 @@ open class CddaObject {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
-    other as CddaObject
+    other as CddaItem
 
     return id != null && id == other.id
   }

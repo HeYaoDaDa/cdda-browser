@@ -59,6 +59,7 @@ class GitRepoVerticle : CoroutineVerticle() {
       Git.open(repoDir)
     } else {
       log.info("Repo is not exists")
+      log.info("Start clone repo to ${repoDir.absolutePath}")
       Git.cloneRepository()
         .setDirectory(repoDir)
         .setURI(repoRemoteURL)

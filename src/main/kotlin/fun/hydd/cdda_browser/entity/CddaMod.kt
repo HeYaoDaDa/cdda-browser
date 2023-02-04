@@ -34,7 +34,7 @@ open class CddaMod {
   open var core: Boolean? = null
 
   @OneToMany(mappedBy = "cddaMod", cascade = [CascadeType.ALL], orphanRemoval = true)
-  open var cddaObjects: MutableSet<CddaObject> = mutableSetOf()
+  open var cddaItems: MutableSet<CddaItem> = mutableSetOf()
 
   @ElementCollection
   @CollectionTable(name = "cdda_mod_depModIds", joinColumns = [JoinColumn(name = "owner_id")])

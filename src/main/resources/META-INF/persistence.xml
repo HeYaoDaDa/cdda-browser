@@ -6,7 +6,7 @@
   <persistence-unit name="cdda-browser">
     <provider>org.hibernate.reactive.provider.ReactivePersistenceProvider</provider>
 
-    <class>fun.hydd.cdda_browser.entity.CddaObject</class>
+    <class>fun.hydd.cdda_browser.entity.CddaItem</class>
     <class>fun.hydd.cdda_browser.entity.CddaMod</class>
     <class>fun.hydd.cdda_browser.entity.CddaVersion</class>
     <class>fun.hydd.cdda_browser.entity.JsonEntity</class>
