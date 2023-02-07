@@ -12,7 +12,7 @@ import org.hibernate.reactive.stage.Stage
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-@JGlobalMap(classes = [CddaVersion::class], excluded = ["cddaMods"])
+@JGlobalMap(classes = [CddaVersion::class], excluded = ["cddaMods", "Companion"])
 class CddaVersionParseDto() {
   var id: Long? = null
 

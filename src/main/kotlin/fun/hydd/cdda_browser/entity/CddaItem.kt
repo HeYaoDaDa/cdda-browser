@@ -25,11 +25,9 @@ open class CddaItem {
   @Column(name = "cdda_type", nullable = false)
   open var cddaType: CddaType? = null
 
-  @Enumerated(EnumType.STRING)
   @Column(name = "cdda_id", nullable = false)
   open var cddaId: String? = null
 
-  @Enumerated(EnumType.STRING)
   @Column(name = "path", nullable = false)
   open var path: String? = null
 

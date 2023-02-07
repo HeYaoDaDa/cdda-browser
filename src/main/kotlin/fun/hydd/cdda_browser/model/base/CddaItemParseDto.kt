@@ -1,9 +1,7 @@
 package `fun`.hydd.cdda_browser.model.base
 
-import com.googlecode.jmapper.JMapper
 import com.googlecode.jmapper.annotations.JGlobalMap
 import com.googlecode.jmapper.annotations.JMap
-import com.googlecode.jmapper.enums.ChooseConfig
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
 import `fun`.hydd.cdda_browser.dao.JsonEntityDao
@@ -18,7 +16,7 @@ import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.io.File
 
-@JGlobalMap(classes = [CddaJsonParseDto::class], excluded = ["id", "data", "log"])
+@JGlobalMap(classes = [CddaJsonParsedResult::class], excluded = ["id", "data", "log"])
 class CddaItemParseDto() {
   @JMap(classes = [CddaItem::class])
   lateinit var jsonType: JsonType
@@ -161,8 +159,10 @@ class CddaItemParseDto() {
   }
 
   suspend fun toEntity(factory: Stage.SessionFactory): CddaItem {
-    val jMapper = JMapper(CddaItem::class.java, CddaItemParseDto::class.java, ChooseConfig.SOURCE)
-    val cddaItem = jMapper.getDestination(this)
+    val cddaItem = CddaItem()
+    cddaItem.cddaType = this.cddaType
+    cddaItem.jsonType = this.jsonType
+    cddaItem.cddaId = this.id
     cddaItem.path = this.path.absolutePath// todo change to relative path
 
     val originalJsonHash = this.json.getHashString()

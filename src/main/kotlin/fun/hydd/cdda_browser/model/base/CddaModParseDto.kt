@@ -38,14 +38,13 @@ class CddaModParseDto() {
 
   lateinit var depMods: Set<CddaModParseDto>
 
-  @JsonIgnore
-  lateinit var cddaJsonParseDtos: Set<CddaJsonParseDto>
+  lateinit var cddaJsonParsedResults: Set<CddaJsonParsedResult>
 
-  @JsonIgnore
   val cddaItems: MutableCollection<CddaItemParseDto> = mutableSetOf()
 
+  @get:JsonIgnore
   val cddaItemSize: Int by lazy {
-    cddaJsonParseDtos.size
+    cddaJsonParsedResults.size
   }
 
   val allDepMods: Set<CddaModParseDto> by lazy {

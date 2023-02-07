@@ -1,11 +1,11 @@
 package `fun`.hydd.cdda_browser.verticles
 
-import `fun`.hydd.cdda_browser.constant.EventBusConstant
 import `fun`.hydd.cdda_browser.dao.CddaVersionDao
 import `fun`.hydd.cdda_browser.dao.JsonEntityDao
 import `fun`.hydd.cdda_browser.model.base.CddaVersionParseDto
 import `fun`.hydd.cdda_browser.model.base.GitHubReleaseDto
 import `fun`.hydd.cdda_browser.model.base.GitTagDto
+import `fun`.hydd.cdda_browser.server.CddaItemParseManager
 import `fun`.hydd.cdda_browser.server.GetTextPoServer
 import `fun`.hydd.cdda_browser.server.ModServer
 import `fun`.hydd.cdda_browser.util.GitUtil
@@ -14,7 +14,6 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.RequestOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.CoroutineVerticle
-import io.vertx.kotlin.coroutines.await
 import io.vertx.kotlin.coroutines.awaitBlocking
 import kotlinx.coroutines.launch
 import org.hibernate.reactive.stage.Stage
@@ -44,9 +43,9 @@ class UpdateVerticle : CoroutineVerticle() {
       GitUtil.hardRestToTag(vertx.eventBus(), cddaVersionParseDto.tagName)
       val cddaModDtoList = ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
       cddaVersionParseDto.cddaMods.addAll(cddaModDtoList)
-      val cddaVersion = vertx.eventBus()
-        .request<JsonObject>(EventBusConstant.CDDA_ITEM_PARSER_GET_TAG_LIST, JsonObject.mapFrom(cddaVersionParseDto))
-        .await().body().mapTo(CddaVersionParseDto::class.java).toEntity(factory)
+      CddaItemParseManager.parseCddaVersion(cddaVersionParseDto)
+      cddaVersionParseDto.toEntity(factory)
+      val cddaVersion = cddaVersionParseDto.toEntity(factory)
       cddaVersion.pos =
         GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), factory, repoDir.absolutePath, cddaVersion)
       CddaVersionDao.save(factory, cddaVersion)

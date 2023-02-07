@@ -2,7 +2,6 @@ package `fun`.hydd.cdda_browser
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import `fun`.hydd.cdda_browser.model.codec.UnitCodec
-import `fun`.hydd.cdda_browser.verticles.CddaItemParserVerticle
 import `fun`.hydd.cdda_browser.verticles.GitRepoVerticle
 import `fun`.hydd.cdda_browser.verticles.UpdateVerticle
 import io.vertx.core.DeploymentOptions
@@ -25,12 +24,6 @@ fun main() {
       .setMaxWorkerExecuteTime(80)
       .setMaxWorkerExecuteTimeUnit(TimeUnit.SECONDS)
   ).compose {
-    vertx.deployVerticle(
-      CddaItemParserVerticle(), DeploymentOptions()
-        .setWorker(true)
-        .setWorkerPoolName("cdda-item-parser-pool")
-    )
-  }.compose {
     vertx.deployVerticle(UpdateVerticle())
   }
 }

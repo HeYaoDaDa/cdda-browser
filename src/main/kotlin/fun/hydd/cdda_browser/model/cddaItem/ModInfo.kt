@@ -3,7 +3,7 @@ package `fun`.hydd.cdda_browser.model.cddaItem
 import com.fasterxml.jackson.annotation.JsonInclude
 import `fun`.hydd.cdda_browser.model.base.CddaItemParseDto
 import `fun`.hydd.cdda_browser.model.base.CddaItemRef
-import `fun`.hydd.cdda_browser.model.base.CddaJsonParseDto
+import `fun`.hydd.cdda_browser.model.base.CddaJsonParsedResult
 import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemParser
@@ -23,7 +23,7 @@ class ModInfo : CddaItemData() {
   var category: Translation = Translation("NO CATEGORY")
 
   class Parser : CddaItemParser() {
-    override fun parseIds(item: CddaJsonParseDto): Set<String> {
+    override fun parseIds(item: CddaJsonParsedResult): Set<String> {
       return when (val idValue = item.json.getValue("id")) {
         is String -> setOf(idValue)
         is JsonArray -> idValue.mapNotNull { if (it is String) it else throw Exception("Id field is not String") }

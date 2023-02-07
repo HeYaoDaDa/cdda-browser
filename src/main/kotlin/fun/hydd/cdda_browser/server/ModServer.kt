@@ -1,7 +1,7 @@
 package `fun`.hydd.cdda_browser.server
 
 import `fun`.hydd.cdda_browser.constant.JsonType
-import `fun`.hydd.cdda_browser.model.base.CddaJsonParseDto
+import `fun`.hydd.cdda_browser.model.base.CddaJsonParsedResult
 import `fun`.hydd.cdda_browser.model.base.CddaModParseDto
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import io.vertx.core.file.FileSystem
@@ -27,7 +27,7 @@ object ModServer {
     val cddaMods = getModDirList(repoPath).map {
       async {
         val mod = parserCddaModJsonObject(findModInfoJsonObjectByModDir(fileSystem, it), it)
-        if (mod != null) mod.cddaJsonParseDtos = getCddaJsonsByMod(fileSystem, mod)
+        if (mod != null) mod.cddaJsonParsedResults = getCddaJsonsByMod(fileSystem, mod)
         mod
       }
     }.awaitAll().mapNotNull { it }
@@ -97,7 +97,7 @@ object ModServer {
   private suspend fun getCddaJsonsByMod(fileSystem: FileSystem, mod: CddaModParseDto) = coroutineScope {
     mod.path.flatMap { getAllJsonFileInDir(it) }.map { jsonFile ->
       async {
-        JsonUtil.getJsonObjectsByFile(fileSystem, jsonFile).map { CddaJsonParseDto.of(it, mod, jsonFile) }
+        JsonUtil.getJsonObjectsByFile(fileSystem, jsonFile).map { CddaJsonParsedResult.of(it, mod, jsonFile) }
       }
     }.awaitAll().flatten().filterNotNull().toSet()
   }

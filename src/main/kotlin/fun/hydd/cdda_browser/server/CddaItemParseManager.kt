@@ -1,33 +1,19 @@
-package `fun`.hydd.cdda_browser.verticles
+package `fun`.hydd.cdda_browser.server
 
 import com.googlecode.jmapper.JMapper
 import `fun`.hydd.cdda_browser.constant.CddaType
-import `fun`.hydd.cdda_browser.constant.EventBusConstant
 import `fun`.hydd.cdda_browser.model.base.CddaItemParseDto
-import `fun`.hydd.cdda_browser.model.base.CddaJsonParseDto
+import `fun`.hydd.cdda_browser.model.base.CddaJsonParsedResult
 import `fun`.hydd.cdda_browser.model.base.CddaModParseDto
 import `fun`.hydd.cdda_browser.model.base.CddaVersionParseDto
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemParser
-import io.vertx.core.json.JsonObject
-import io.vertx.kotlin.coroutines.CoroutineVerticle
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class CddaItemParserVerticle : CoroutineVerticle() {
+object CddaItemParseManager {
   private val log = LoggerFactory.getLogger(this.javaClass)
 
-  override suspend fun start() {
-    super.start()
-    val eventBus = vertx.eventBus()
-    eventBus.consumer<JsonObject>(EventBusConstant.CDDA_ITEM_PARSER_GET_TAG_LIST) {
-      val cddaVersionParseDto = it.body().mapTo(CddaVersionParseDto::class.java)
-      parseCddaVersion(cddaVersionParseDto)
-      it.reply(JsonObject.mapFrom(cddaVersionParseDto))
-    }
-    log.info("CddaItemParserVerticle Start End")
-  }
-
-  private fun parseCddaVersion(cddaVersionParseDto: CddaVersionParseDto) {
+  fun parseCddaVersion(cddaVersionParseDto: CddaVersionParseDto) {
     val pendQueue = PendQueue(cddaVersionParseDto.cddaMods)
     val finalQueue = FinalQueue()
     cddaVersionParseDto.cddaMods.forEach { mod ->
@@ -91,33 +77,33 @@ class CddaItemParserVerticle : CoroutineVerticle() {
     }
   }
 
-  private fun parseId(cddaJsonParseDto: CddaJsonParseDto): List<CddaItemParseDto> {
-    val parser = cddaJsonParseDto.cddaType.parser
-    val ids = parser.parseIds(cddaJsonParseDto)
+  private fun parseId(cddaJsonParsedResult: CddaJsonParsedResult): List<CddaItemParseDto> {
+    val parser = cddaJsonParsedResult.cddaType.parser
+    val ids = parser.parseIds(cddaJsonParsedResult)
     if (ids.isEmpty()) throw Exception("Parse id is empty")
-    val jMapper = JMapper(CddaItemParseDto::class.java, CddaJsonParseDto::class.java)
+    val jMapper = JMapper(CddaItemParseDto::class.java, CddaJsonParsedResult::class.java)
     return ids
       .map {
-        val cddaItemDto = jMapper.getDestination(cddaJsonParseDto)
+        val cddaItemDto = jMapper.getDestination(cddaJsonParsedResult)
         cddaItemDto.id = it
         cddaItemDto
       }
   }
 
   private class PendQueue(mods: Collection<CddaModParseDto>) {
-    private val modTypeJsonsMap: MutableMap<CddaModParseDto, MutableMap<CddaType, MutableSet<CddaJsonParseDto>>> =
+    private val modTypeJsonsMap: MutableMap<CddaModParseDto, MutableMap<CddaType, MutableSet<CddaJsonParsedResult>>> =
       mutableMapOf()
 
     init {
       for (mod in mods) {
-        for (cddaItem in mod.cddaJsonParseDtos) {
+        for (cddaItem in mod.cddaJsonParsedResults) {
           val typeJsonsMap = modTypeJsonsMap.getOrElse(mod) {
-            val newTypeItemsMap = mutableMapOf<CddaType, MutableSet<CddaJsonParseDto>>()
+            val newTypeItemsMap = mutableMapOf<CddaType, MutableSet<CddaJsonParsedResult>>()
             modTypeJsonsMap[mod] = newTypeItemsMap
             newTypeItemsMap
           }
           typeJsonsMap.getOrElse(cddaItem.cddaType) {
-            val newItems = mutableSetOf<CddaJsonParseDto>()
+            val newItems = mutableSetOf<CddaJsonParsedResult>()
             typeJsonsMap[cddaItem.cddaType] = newItems
             newItems
           }.add(cddaItem)
@@ -125,7 +111,7 @@ class CddaItemParserVerticle : CoroutineVerticle() {
       }
     }
 
-    fun pop(mod: CddaModParseDto, type: CddaType): MutableSet<CddaJsonParseDto> {
+    fun pop(mod: CddaModParseDto, type: CddaType): MutableSet<CddaJsonParsedResult> {
       val cddaItems =
         modTypeJsonsMap.getOrDefault(mod, mutableMapOf()).getOrDefault(type, mutableSetOf()).toMutableSet()
       val result = cddaItems.toMutableSet()
