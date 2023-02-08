@@ -1,22 +1,21 @@
 package `fun`.hydd.cdda_browser.server
 
-import com.googlecode.jmapper.JMapper
 import `fun`.hydd.cdda_browser.constant.CddaType
-import `fun`.hydd.cdda_browser.model.base.CddaItemParseDto
-import `fun`.hydd.cdda_browser.model.base.CddaJsonParsedResult
-import `fun`.hydd.cdda_browser.model.base.CddaModParseDto
-import `fun`.hydd.cdda_browser.model.base.CddaVersionParseDto
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemParser
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseItem
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseMod
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseVersion
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParsedJson
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 object CddaItemParseManager {
   private val log = LoggerFactory.getLogger(this.javaClass)
 
-  fun parseCddaVersion(cddaVersionParseDto: CddaVersionParseDto) {
-    val pendQueue = PendQueue(cddaVersionParseDto.cddaMods)
+  fun parseCddaVersion(cddaParseVersion: CddaParseVersion) {
+    val pendQueue = PendQueue(cddaParseVersion.cddaMods)
     val finalQueue = FinalQueue()
-    cddaVersionParseDto.cddaMods.forEach { mod ->
+    cddaParseVersion.cddaMods.forEach { mod ->
       val deferQueue = DeferQueue()
       for (cddaType in CddaType.values()) {
         val cddaItems = pendQueue.pop(mod, cddaType).flatMap { parseId(it) }
@@ -40,10 +39,10 @@ object CddaItemParseManager {
   private fun parseCddaItems(
     finalQueue: FinalQueue,
     deferQueue: DeferQueue,
-    mod: CddaModParseDto,
-    cddaItemParseDtos: Collection<CddaItemParseDto>
+    mod: CddaParseMod,
+    cddaParseItems: Collection<CddaParseItem>
   ) {
-    for (cddaItem in cddaItemParseDtos) {
+    for (cddaItem in cddaParseItems) {
       val parser = cddaItem.cddaType.parser
       val parentItemId = cddaItem.copyFrom
       if (parentItemId != null) {
@@ -63,10 +62,10 @@ object CddaItemParseManager {
   private fun parseCddaItemWithoutParent(
     finalQueue: FinalQueue,
     deferQueue: DeferQueue,
-    mod: CddaModParseDto,
-    cddaItem: CddaItemParseDto,
+    mod: CddaParseMod,
+    cddaItem: CddaParseItem,
     parser: CddaItemParser,
-    parentItem: CddaItemParseDto?
+    parentItem: CddaParseItem?
   ) {
     val ref = parser.parse(cddaItem, parentItem?.data)
     if (ref !== null) deferQueue.add(cddaItem, ref.type, ref.id)
@@ -77,33 +76,32 @@ object CddaItemParseManager {
     }
   }
 
-  private fun parseId(cddaJsonParsedResult: CddaJsonParsedResult): List<CddaItemParseDto> {
-    val parser = cddaJsonParsedResult.cddaType.parser
-    val ids = parser.parseIds(cddaJsonParsedResult)
+  private fun parseId(cddaParsedJson: CddaParsedJson): List<CddaParseItem> {
+    val parser = cddaParsedJson.cddaType.parser
+    val ids = parser.parseIds(cddaParsedJson)
     if (ids.isEmpty()) throw Exception("Parse id is empty")
-    val jMapper = JMapper(CddaItemParseDto::class.java, CddaJsonParsedResult::class.java)
     return ids
       .map {
-        val cddaItemDto = jMapper.getDestination(cddaJsonParsedResult)
+        val cddaItemDto = cddaParsedJson.toCddaParseItem()
         cddaItemDto.id = it
         cddaItemDto
       }
   }
 
-  private class PendQueue(mods: Collection<CddaModParseDto>) {
-    private val modTypeJsonsMap: MutableMap<CddaModParseDto, MutableMap<CddaType, MutableSet<CddaJsonParsedResult>>> =
+  private class PendQueue(mods: Collection<CddaParseMod>) {
+    private val modTypeJsonsMap: MutableMap<CddaParseMod, MutableMap<CddaType, MutableSet<CddaParsedJson>>> =
       mutableMapOf()
 
     init {
       for (mod in mods) {
-        for (cddaItem in mod.cddaJsonParsedResults) {
+        for (cddaItem in mod.cddaParsedJsons) {
           val typeJsonsMap = modTypeJsonsMap.getOrElse(mod) {
-            val newTypeItemsMap = mutableMapOf<CddaType, MutableSet<CddaJsonParsedResult>>()
+            val newTypeItemsMap = mutableMapOf<CddaType, MutableSet<CddaParsedJson>>()
             modTypeJsonsMap[mod] = newTypeItemsMap
             newTypeItemsMap
           }
           typeJsonsMap.getOrElse(cddaItem.cddaType) {
-            val newItems = mutableSetOf<CddaJsonParsedResult>()
+            val newItems = mutableSetOf<CddaParsedJson>()
             typeJsonsMap[cddaItem.cddaType] = newItems
             newItems
           }.add(cddaItem)
@@ -111,7 +109,7 @@ object CddaItemParseManager {
       }
     }
 
-    fun pop(mod: CddaModParseDto, type: CddaType): MutableSet<CddaJsonParsedResult> {
+    fun pop(mod: CddaParseMod, type: CddaType): MutableSet<CddaParsedJson> {
       val cddaItems =
         modTypeJsonsMap.getOrDefault(mod, mutableMapOf()).getOrDefault(type, mutableSetOf()).toMutableSet()
       val result = cddaItems.toMutableSet()
@@ -121,28 +119,28 @@ object CddaItemParseManager {
   }
 
   private class FinalQueue {
-    private val modTypeIdItemsMap: MutableMap<CddaModParseDto, MutableMap<CddaType, MutableMap<String, MutableSet<CddaItemParseDto>>>> =
+    private val modTypeIdItemsMap: MutableMap<CddaParseMod, MutableMap<CddaType, MutableMap<String, MutableSet<CddaParseItem>>>> =
       mutableMapOf()
 
-    fun add(cddaItemParseDto: CddaItemParseDto) {
-      val typeIdItemsMap = modTypeIdItemsMap.getOrElse(cddaItemParseDto.mod) {
-        val newTypeItemsMap = mutableMapOf<CddaType, MutableMap<String, MutableSet<CddaItemParseDto>>>()
-        modTypeIdItemsMap[cddaItemParseDto.mod] = newTypeItemsMap
+    fun add(cddaParseItem: CddaParseItem) {
+      val typeIdItemsMap = modTypeIdItemsMap.getOrElse(cddaParseItem.mod) {
+        val newTypeItemsMap = mutableMapOf<CddaType, MutableMap<String, MutableSet<CddaParseItem>>>()
+        modTypeIdItemsMap[cddaParseItem.mod] = newTypeItemsMap
         newTypeItemsMap
       }
-      val idItemsMap = typeIdItemsMap.getOrElse(cddaItemParseDto.cddaType) {
-        val newIdItems = mutableMapOf<String, MutableSet<CddaItemParseDto>>()
-        typeIdItemsMap[cddaItemParseDto.cddaType] = newIdItems
+      val idItemsMap = typeIdItemsMap.getOrElse(cddaParseItem.cddaType) {
+        val newIdItems = mutableMapOf<String, MutableSet<CddaParseItem>>()
+        typeIdItemsMap[cddaParseItem.cddaType] = newIdItems
         newIdItems
       }
-      idItemsMap.getOrElse(cddaItemParseDto.id) {
-        val newItems = mutableSetOf<CddaItemParseDto>()
-        idItemsMap[cddaItemParseDto.id] = newItems
+      idItemsMap.getOrElse(cddaParseItem.id) {
+        val newItems = mutableSetOf<CddaParseItem>()
+        idItemsMap[cddaParseItem.id] = newItems
         newItems
-      }.add(cddaItemParseDto)
+      }.add(cddaParseItem)
     }
 
-    fun find(mod: CddaModParseDto, type: CddaType, id: String): MutableSet<CddaItemParseDto> {
+    fun find(mod: CddaParseMod, type: CddaType, id: String): MutableSet<CddaParseItem> {
       mod.allDepMods.forEach {
         val cddaItems = modTypeIdItemsMap.getOrDefault(it, mutableMapOf()).getOrDefault(type, mutableMapOf())
           .getOrDefault(id, mutableSetOf())
@@ -156,33 +154,33 @@ object CddaItemParseManager {
       log.info("Final item size is ${finalItems.size}")
     }
 
-    fun getModItemsSize(mod: CddaModParseDto): Int {
+    fun getModItemsSize(mod: CddaParseMod): Int {
       return getModItems(mod).size
     }
 
-    fun getModItems(mod: CddaModParseDto): List<CddaItemParseDto> {
+    fun getModItems(mod: CddaParseMod): List<CddaParseItem> {
       return modTypeIdItemsMap.getOrDefault(mod, mutableMapOf()).values.flatMap { it.values }.flatten()
     }
   }
 
   private class DeferQueue {
-    val typeIdItemsMap: MutableMap<CddaType, MutableMap<String, MutableSet<CddaItemParseDto>>> =
+    val typeIdItemsMap: MutableMap<CddaType, MutableMap<String, MutableSet<CddaParseItem>>> =
       mutableMapOf()
 
-    fun add(cddaItemParseDto: CddaItemParseDto, deferType: CddaType, deferId: String) {
+    fun add(cddaParseItem: CddaParseItem, deferType: CddaType, deferId: String) {
       val idItemsMap = typeIdItemsMap.getOrElse(deferType) {
-        val newIdItems = mutableMapOf<String, MutableSet<CddaItemParseDto>>()
+        val newIdItems = mutableMapOf<String, MutableSet<CddaParseItem>>()
         typeIdItemsMap[deferType] = newIdItems
         newIdItems
       }
       idItemsMap.getOrElse(deferId) {
-        val newItems = mutableSetOf<CddaItemParseDto>()
+        val newItems = mutableSetOf<CddaParseItem>()
         idItemsMap[deferId] = newItems
         newItems
-      }.add(cddaItemParseDto)
+      }.add(cddaParseItem)
     }
 
-    fun pop(type: CddaType, id: String): MutableSet<CddaItemParseDto> {
+    fun pop(type: CddaType, id: String): MutableSet<CddaParseItem> {
       val cddaItems = typeIdItemsMap.getOrDefault(type, mutableMapOf()).getOrDefault(id, mutableSetOf())
       val result = cddaItems.toMutableSet()
       cddaItems.clear()

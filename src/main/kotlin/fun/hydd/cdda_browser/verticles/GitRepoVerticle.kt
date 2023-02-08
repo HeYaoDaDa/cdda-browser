@@ -24,6 +24,7 @@ class GitRepoVerticle : CoroutineVerticle() {
 
 
   override suspend fun start() {
+    log.info("GitRepoVerticle start")
     super.start()
     init()
     val eventBus = vertx.eventBus()
@@ -42,6 +43,7 @@ class GitRepoVerticle : CoroutineVerticle() {
     eventBus.consumer<Unit>(EventBusConstant.GIT_REPO_GET_TAG_LIST) {
       it.reply(getTagList())
     }
+    log.info("GitRepoVerticle end")
   }
 
   override suspend fun stop() {
@@ -54,18 +56,19 @@ class GitRepoVerticle : CoroutineVerticle() {
    *
    */
   private fun init() {
+    log.info("init start")
     git = if (repoDir.exists()) {
-      log.info("Repo is exists")
+      log.info("repoDir is exists")
       Git.open(repoDir)
     } else {
-      log.info("Repo is not exists")
-      log.info("Start clone repo to ${repoDir.absolutePath}")
+      log.info("repoDir is not exists")
+      log.info("clone repo to ${repoDir.absolutePath}")
       Git.cloneRepository()
         .setDirectory(repoDir)
         .setURI(repoRemoteURL)
         .setBranch(Constants.MASTER).call()
     }
-    log.info("End initGit")
+    log.info("init end")
   }
 
   /**
@@ -73,9 +76,9 @@ class GitRepoVerticle : CoroutineVerticle() {
    *
    */
   private fun update() {
-    log.info("Start update")
+    log.info("update start")
     git.pull().setRemote(Constants.DEFAULT_REMOTE_NAME).setRemoteBranchName(Constants.MASTER).call()
-    log.info("End update")
+    log.info("update end")
   }
 
   /**

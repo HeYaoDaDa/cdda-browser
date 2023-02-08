@@ -3,9 +3,9 @@ package `fun`.hydd.cdda_browser
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
 import `fun`.hydd.cdda_browser.constant.JsonType
-import `fun`.hydd.cdda_browser.entity.CddaMod
-import `fun`.hydd.cdda_browser.entity.CddaItem
-import `fun`.hydd.cdda_browser.entity.CddaVersion
+import `fun`.hydd.cdda_browser.model.entity.CddaItem
+import `fun`.hydd.cdda_browser.model.entity.CddaMod
+import `fun`.hydd.cdda_browser.model.entity.CddaVersion
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension

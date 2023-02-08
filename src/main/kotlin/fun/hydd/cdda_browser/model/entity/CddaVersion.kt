@@ -1,4 +1,4 @@
-package `fun`.hydd.cdda_browser.entity
+package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
 import java.time.LocalDateTime
@@ -6,7 +6,7 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "cdda_version")
-open class CddaVersion() {
+open class CddaVersion {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id", nullable = false)

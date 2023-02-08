@@ -1,4 +1,4 @@
-package `fun`.hydd.cdda_browser.entity
+package `fun`.hydd.cdda_browser.model.entity
 
 import io.vertx.core.json.JsonObject
 import org.hibernate.Hibernate

@@ -1,6 +1,6 @@
 package `fun`.hydd.cdda_browser.util
 
-import `fun`.hydd.cdda_browser.extension.getCollection
+import `fun`.hydd.cdda_browser.util.extension.getCollection
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.core.json.array

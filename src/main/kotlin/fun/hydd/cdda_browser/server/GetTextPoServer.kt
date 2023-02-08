@@ -1,9 +1,9 @@
 package `fun`.hydd.cdda_browser.server
 
-import `fun`.hydd.cdda_browser.dao.FileEntityDao
-import `fun`.hydd.cdda_browser.entity.CddaVersion
-import `fun`.hydd.cdda_browser.entity.FileEntity
-import `fun`.hydd.cdda_browser.entity.GetTextPo
+import `fun`.hydd.cdda_browser.model.dao.FileEntityDao
+import `fun`.hydd.cdda_browser.model.entity.CddaVersion
+import `fun`.hydd.cdda_browser.model.entity.FileEntity
+import `fun`.hydd.cdda_browser.model.entity.GetTextPo
 import io.vertx.core.file.FileSystem
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.async

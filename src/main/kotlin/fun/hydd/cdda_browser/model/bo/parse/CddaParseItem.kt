@@ -1,33 +1,29 @@
-package `fun`.hydd.cdda_browser.model.base
+package `fun`.hydd.cdda_browser.model.bo.parse
 
-import com.googlecode.jmapper.annotations.JGlobalMap
-import com.googlecode.jmapper.annotations.JMap
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
-import `fun`.hydd.cdda_browser.dao.JsonEntityDao
-import `fun`.hydd.cdda_browser.entity.CddaItem
-import `fun`.hydd.cdda_browser.entity.JsonEntity
-import `fun`.hydd.cdda_browser.extension.getCollection
-import `fun`.hydd.cdda_browser.extension.getHashString
-import `fun`.hydd.cdda_browser.extension.getTranslation
+import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
+import `fun`.hydd.cdda_browser.model.dao.JsonEntityDao
+import `fun`.hydd.cdda_browser.model.entity.CddaItem
+import `fun`.hydd.cdda_browser.model.entity.CddaMod
+import `fun`.hydd.cdda_browser.model.entity.JsonEntity
+import `fun`.hydd.cdda_browser.util.extension.getCollection
+import `fun`.hydd.cdda_browser.util.extension.getHashString
+import `fun`.hydd.cdda_browser.util.extension.getTranslation
 import io.vertx.core.json.JsonObject
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.io.File
 
-@JGlobalMap(classes = [CddaJsonParsedResult::class], excluded = ["id", "data", "log"])
-class CddaItemParseDto() {
-  @JMap(classes = [CddaItem::class])
+class CddaParseItem {
   lateinit var jsonType: JsonType
 
-  @JMap(classes = [CddaItem::class])
   lateinit var cddaType: CddaType
 
-  lateinit var mod: CddaModParseDto
+  lateinit var mod: CddaParseMod
 
   // not is db primary key
-  @JMap(value = "cddaId", classes = [CddaItem::class])
   lateinit var id: String
 
   lateinit var path: File
@@ -158,13 +154,7 @@ class CddaItemParseDto() {
     return true
   }
 
-  suspend fun toEntity(factory: Stage.SessionFactory): CddaItem {
-    val cddaItem = CddaItem()
-    cddaItem.cddaType = this.cddaType
-    cddaItem.jsonType = this.jsonType
-    cddaItem.cddaId = this.id
-    cddaItem.path = this.path.absolutePath// todo change to relative path
-
+  suspend fun toCddaItem(factory: Stage.SessionFactory, mod: CddaMod): CddaItem {
     val originalJsonHash = this.json.getHashString()
     var originalJsonEntity = JsonEntityDao.findByHashCode(factory, originalJsonHash)
     if (originalJsonEntity == null) {
@@ -172,7 +162,6 @@ class CddaItemParseDto() {
       originalJsonEntity.json = this.json
       originalJsonEntity.hashCode = originalJsonHash
     }
-    cddaItem.originalJson = originalJsonEntity
 
     val json = JsonObject.mapFrom(this.data!!)
     val jsonHash = json.getHashString()
@@ -182,6 +171,14 @@ class CddaItemParseDto() {
       jsonEntity.json = json
       jsonEntity.hashCode = jsonHash
     }
+
+    val cddaItem = CddaItem()
+    cddaItem.cddaMod = mod
+    cddaItem.cddaType = this.cddaType
+    cddaItem.jsonType = this.jsonType
+    cddaItem.cddaId = this.id
+    cddaItem.path = this.path.absolutePath// todo change to relative path
+    cddaItem.originalJson = originalJsonEntity
     cddaItem.json = jsonEntity
     return cddaItem
   }

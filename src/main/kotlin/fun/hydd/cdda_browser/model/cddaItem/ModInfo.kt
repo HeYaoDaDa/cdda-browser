@@ -1,12 +1,12 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import `fun`.hydd.cdda_browser.model.base.CddaItemParseDto
 import `fun`.hydd.cdda_browser.model.base.CddaItemRef
-import `fun`.hydd.cdda_browser.model.base.CddaJsonParsedResult
 import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemParser
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseItem
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParsedJson
 import io.vertx.core.json.JsonArray
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -23,7 +23,7 @@ class ModInfo : CddaItemData() {
   var category: Translation = Translation("NO CATEGORY")
 
   class Parser : CddaItemParser() {
-    override fun parseIds(item: CddaJsonParsedResult): Set<String> {
+    override fun parseIds(item: CddaParsedJson): Set<String> {
       return when (val idValue = item.json.getValue("id")) {
         is String -> setOf(idValue)
         is JsonArray -> idValue.mapNotNull { if (it is String) it else throw Exception("Id field is not String") }
@@ -33,7 +33,7 @@ class ModInfo : CddaItemData() {
       }
     }
 
-    override fun doParse(item: CddaItemParseDto, data: CddaItemData): CddaItemRef? {
+    override fun doParse(item: CddaParseItem, data: CddaItemData): CddaItemRef? {
       if (data is ModInfo) {
         data.id = item.id
         data.name = item.getTranslation("name", null, data.name)

@@ -1,9 +1,11 @@
 package `fun`.hydd.cdda_browser.server
 
+import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
-import `fun`.hydd.cdda_browser.model.base.CddaJsonParsedResult
-import `fun`.hydd.cdda_browser.model.base.CddaModParseDto
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseMod
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParsedJson
 import `fun`.hydd.cdda_browser.util.JsonUtil
+import `fun`.hydd.cdda_browser.util.extension.getCollection
 import io.vertx.core.file.FileSystem
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.await
@@ -22,12 +24,13 @@ object ModServer {
    * @param fileSystem vertx FileSystem
    * @return sorted CddaModDto list
    */
-  suspend fun getCddaModDtoList(fileSystem: FileSystem, repoPath: String): List<CddaModParseDto> = coroutineScope {
+  suspend fun getCddaModDtoList(fileSystem: FileSystem, repoPath: String): List<CddaParseMod> = coroutineScope {
     log.info("Start getCddaModDtoList")
+    val missJsonTypes = mutableSetOf<String>()
     val cddaMods = getModDirList(repoPath).map {
       async {
         val mod = parserCddaModJsonObject(findModInfoJsonObjectByModDir(fileSystem, it), it)
-        if (mod != null) mod.cddaJsonParsedResults = getCddaJsonsByMod(fileSystem, mod)
+        if (mod != null) mod.cddaParsedJsons = getCddaJsonsByMod(fileSystem, mod, missJsonTypes)
         mod
       }
     }.awaitAll().mapNotNull { it }
@@ -75,7 +78,7 @@ object ModServer {
    * @param modDir
    * @return
    */
-  private suspend fun parserCddaModJsonObject(jsonObject: JsonObject?, modDir: File): CddaModParseDto? {
+  private suspend fun parserCddaModJsonObject(jsonObject: JsonObject?, modDir: File): CddaParseMod? {
     if (jsonObject == null) return null
     if (!JsonType.MOD_INFO.isEquals(jsonObject.getString("type"))) throw IllegalArgumentException("jsonObject type not is MOD_INFO")
     val modPaths = mutableSetOf(modDir)
@@ -85,7 +88,15 @@ object ModServer {
         modDir.toPath().resolve(path).toRealPath()
       }.toFile())
     }
-    return CddaModParseDto.of(jsonObject, modPaths)
+    val cddaModDto = CddaParseMod()
+    cddaModDto.modId = jsonObject.getString("id")
+    cddaModDto.name = jsonObject.getString("name")
+    cddaModDto.description = jsonObject.getString("description")
+    cddaModDto.obsolete = jsonObject.getBoolean("obsolete", false)
+    cddaModDto.core = jsonObject.getBoolean("core", false)
+    cddaModDto.depModIds = jsonObject.getCollection<String>("dependencies", listOf()).toHashSet()
+    cddaModDto.path = modPaths
+    return cddaModDto
   }
 
   /**
@@ -94,12 +105,48 @@ object ModServer {
    * @param fileSystem
    * @param mod
    */
-  private suspend fun getCddaJsonsByMod(fileSystem: FileSystem, mod: CddaModParseDto) = coroutineScope {
-    mod.path.flatMap { getAllJsonFileInDir(it) }.map { jsonFile ->
-      async {
-        JsonUtil.getJsonObjectsByFile(fileSystem, jsonFile).map { CddaJsonParsedResult.of(it, mod, jsonFile) }
+  private suspend fun getCddaJsonsByMod(fileSystem: FileSystem, mod: CddaParseMod, missJsonTypes: MutableSet<String>) =
+    coroutineScope {
+      mod.path.flatMap { getAllJsonFileInDir(it) }.map { jsonFile ->
+        async {
+          JsonUtil.getJsonObjectsByFile(fileSystem, jsonFile).map { parseCddaJson(it, mod, jsonFile, missJsonTypes) }
+        }
+      }.awaitAll().flatten().filterNotNull().toSet()
+    }
+
+  private fun parseCddaJson(
+    jsonObject: JsonObject,
+    mod: CddaParseMod,
+    path: File,
+    missJsonTypes: MutableSet<String>
+  ): CddaParsedJson? {
+    return if (jsonObject.containsKey("type")) {
+      val type = jsonObject.getString("type")
+      if (missJsonTypes.contains(type)) return null
+      try {
+        val jsonType = JsonType.valueOf(type)
+        val cddaType = CddaType.values().first { it.jsonType.contains(jsonType) }
+        val cddaParsedJson = CddaParsedJson()
+        cddaParsedJson.jsonType = jsonType
+        cddaParsedJson.cddaType = cddaType
+        cddaParsedJson.mod = mod
+        cddaParsedJson.path = path
+        cddaParsedJson.json = jsonObject
+        cddaParsedJson.copyFrom = jsonObject.getString("copy-from")
+        cddaParsedJson.abstract = jsonObject.getBoolean("abstract", false)
+        cddaParsedJson.relative = jsonObject.getJsonObject("relative")
+        cddaParsedJson.proportional = jsonObject.getJsonObject("proportional")
+        cddaParsedJson.extend = jsonObject.getJsonObject("extend")
+        cddaParsedJson.delete = jsonObject.getJsonObject("delete")
+        cddaParsedJson
+      } catch (e: IllegalArgumentException) {
+        missJsonTypes.add(type)
+        log.warn("$type not exits in JsonType")
+        null
       }
-    }.awaitAll().flatten().filterNotNull().toSet()
+    } else {
+      null
+    }
   }
 
 
@@ -129,7 +176,7 @@ object ModServer {
    * @param mods List<CddaMod>
    * @return List<CddaMod>
    */
-  private fun sortMods(mods: List<CddaModParseDto>): List<CddaModParseDto> {
+  private fun sortMods(mods: List<CddaParseMod>): List<CddaParseMod> {
     val resultModIds = mutableListOf<String>()
     val myMods = mods.map { Pair(it.modId, it.depModIds.toMutableList()) }.toMutableList()
     while (myMods.isNotEmpty()) {
@@ -147,7 +194,7 @@ object ModServer {
    * set mods depMods, mods must sored
    * @param soredMods List<CddaMod>
    */
-  private fun setAllModDepMods(soredMods: List<CddaModParseDto>) {
+  private fun setAllModDepMods(soredMods: List<CddaParseMod>) {
     val modMap = soredMods.associateBy { it.modId }
     soredMods.forEach { superMod -> superMod.depMods = superMod.depModIds.mapNotNull { modMap[it] }.toHashSet() }
   }

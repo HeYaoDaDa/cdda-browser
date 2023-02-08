@@ -6,7 +6,4 @@ object EventBusConstant {
   const val GIT_REPO_GET_REV_OBJECT = "GitRepo.getRevObject"
   const val GIT_REPO_GET_LATEST_REV_OBJECT = "GitRepo.getLatestRevObject"
   const val GIT_REPO_GET_TAG_LIST = "GitRepo.getTagList"
-
-
-  const val CDDA_ITEM_PARSER_GET_TAG_LIST = "CddaItemParser.parseVersion"
 }

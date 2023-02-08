@@ -1,7 +1,7 @@
-package `fun`.hydd.cdda_browser.dao
+package `fun`.hydd.cdda_browser.model.dao
 
-import `fun`.hydd.cdda_browser.entity.CddaVersion
-import `fun`.hydd.cdda_browser.extension.await
+import `fun`.hydd.cdda_browser.model.entity.CddaVersion
+import `fun`.hydd.cdda_browser.util.extension.await
 import org.hibernate.reactive.stage.Stage.SessionFactory
 
 object CddaVersionDao {

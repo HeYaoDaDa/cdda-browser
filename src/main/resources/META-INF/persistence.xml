@@ -6,12 +6,12 @@
   <persistence-unit name="cdda-browser">
     <provider>org.hibernate.reactive.provider.ReactivePersistenceProvider</provider>
 
-    <class>fun.hydd.cdda_browser.entity.CddaItem</class>
-    <class>fun.hydd.cdda_browser.entity.CddaMod</class>
-    <class>fun.hydd.cdda_browser.entity.CddaVersion</class>
-    <class>fun.hydd.cdda_browser.entity.JsonEntity</class>
-    <class>fun.hydd.cdda_browser.entity.GetTextPo</class>
-    <class>fun.hydd.cdda_browser.entity.FileEntity</class>
+    <class>fun.hydd.cdda_browser.model.entity.CddaItem</class>
+    <class>fun.hydd.cdda_browser.model.entity.CddaMod</class>
+    <class>fun.hydd.cdda_browser.model.entity.CddaVersion</class>
+    <class>fun.hydd.cdda_browser.model.entity.JsonEntity</class>
+    <class>fun.hydd.cdda_browser.model.entity.GetTextPo</class>
+    <class>fun.hydd.cdda_browser.model.entity.FileEntity</class>
 
     <properties>
       <!-- PostgresSQL -->

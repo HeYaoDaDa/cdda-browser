@@ -1,4 +1,4 @@
-package `fun`.hydd.cdda_browser.entity
+package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType

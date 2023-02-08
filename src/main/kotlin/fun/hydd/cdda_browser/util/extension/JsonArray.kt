@@ -1,4 +1,4 @@
-package `fun`.hydd.cdda_browser.extension
+package `fun`.hydd.cdda_browser.util.extension
 
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
