@@ -2,12 +2,14 @@ package `fun`.hydd.cdda_browser.model.bo.parse
 
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
+import `fun`.hydd.cdda_browser.model.base.CddaItemRef
 import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
 import `fun`.hydd.cdda_browser.model.dao.JsonEntityDao
 import `fun`.hydd.cdda_browser.model.entity.CddaItem
 import `fun`.hydd.cdda_browser.model.entity.CddaMod
 import `fun`.hydd.cdda_browser.model.entity.JsonEntity
+import `fun`.hydd.cdda_browser.util.extension.getCddaItemRef
 import `fun`.hydd.cdda_browser.util.extension.getCollection
 import `fun`.hydd.cdda_browser.util.extension.getHashString
 import `fun`.hydd.cdda_browser.util.extension.getTranslation
@@ -83,6 +85,11 @@ class CddaParseItem {
 
   fun getTranslation(key: String, ctxt: String? = null, parentValue: Translation?): Translation? {
     return if (json.containsKey(key)) json.getTranslation(key, ctxt)
+    else parentValue
+  }
+
+  fun getCddaItemRef(key: String, cddaType: CddaType, parentValue: CddaItemRef?): CddaItemRef? {
+    return if (json.containsKey(key)) json.getCddaItemRef(key, cddaType)
     else parentValue
   }
 

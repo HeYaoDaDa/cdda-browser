@@ -1,5 +1,7 @@
 package `fun`.hydd.cdda_browser.util.extension
 
+import `fun`.hydd.cdda_browser.constant.CddaType
+import `fun`.hydd.cdda_browser.model.base.CddaItemRef
 import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
@@ -31,8 +33,9 @@ fun JsonObject.getTranslation(key: String, ctxt: String? = null): Translation? {
   } else null
 }
 
-fun JsonObject.getTranslation(key: String, ctxt: String? = null, def: Translation): Translation {
-  return this.getTranslation(key, ctxt) ?: def
+fun JsonObject.getCddaItemRef(key: String, cddaType: CddaType): CddaItemRef? {
+  val id = this.getString(key)
+  return if (id != null) CddaItemRef(cddaType, id) else null
 }
 
 /**

@@ -123,9 +123,18 @@ object ModServer {
     return if (jsonObject.containsKey("type")) {
       val type = jsonObject.getString("type")
       if (missJsonTypes.contains(type)) return null
-      try {
-        val jsonType = JsonType.valueOf(type)
-        val cddaType = CddaType.values().first { it.jsonType.contains(jsonType) }
+      var cddaType: CddaType? = null
+      var jsonType: JsonType? = null
+      for (cddaTypeEntry in CddaType.values()) {
+        for (jsonTypeEntry in cddaTypeEntry.jsonType) {
+          if (jsonTypeEntry.isEquals(type)) {
+            cddaType = cddaTypeEntry
+            jsonType = jsonTypeEntry
+            break
+          }
+        }
+      }
+      if (cddaType != null && jsonType != null) {
         val cddaParsedJson = CddaParsedJson()
         cddaParsedJson.jsonType = jsonType
         cddaParsedJson.cddaType = cddaType
@@ -139,7 +148,7 @@ object ModServer {
         cddaParsedJson.extend = jsonObject.getJsonObject("extend")
         cddaParsedJson.delete = jsonObject.getJsonObject("delete")
         cddaParsedJson
-      } catch (e: IllegalArgumentException) {
+      } else {
         missJsonTypes.add(type)
         log.warn("$type not exits in JsonType")
         null
