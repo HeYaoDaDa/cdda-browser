@@ -7,9 +7,10 @@ import io.vertx.core.json.JsonArray
 
 abstract class CddaItemParser {
   fun parse(item: CddaParseItem, data: CddaItemData?): CddaItemRef? {
+    val parent = data != null
     val realData = data ?: newData()
     item.data = realData
-    return doParse(item, realData)
+    return doParse(item, realData, parent)
   }
 
   open fun parseIds(item: CddaParsedJson): Set<String> {
@@ -22,6 +23,6 @@ abstract class CddaItemParser {
     }
   }
 
-  protected abstract fun doParse(item: CddaParseItem, data: CddaItemData): CddaItemRef?
+  protected abstract fun doParse(item: CddaParseItem, data: CddaItemData, parent: Boolean): CddaItemRef?
   protected abstract fun newData(): CddaItemData
 }

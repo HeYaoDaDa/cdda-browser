@@ -12,7 +12,7 @@ import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseItem
 class JsonFlag : CddaItemData() {
   lateinit var id: String
   var info: Translation? = null
-  var conflicts: MutableSet<CddaItemRef> = mutableSetOf()
+  lateinit var conflicts: MutableSet<CddaItemRef>
   var inherit: Boolean = true
   var craftInherit: Boolean = false
   var requiresFlag: CddaItemRef? = null
@@ -21,15 +21,13 @@ class JsonFlag : CddaItemData() {
   var name: Translation? = null
 
   class Parser : CddaItemParser() {
-    override fun doParse(item: CddaParseItem, data: CddaItemData): CddaItemRef? {
+    override fun doParse(item: CddaParseItem, data: CddaItemData, parent: Boolean): CddaItemRef? {
       if (data is JsonFlag) {
         data.id = item.id
         data.info = item.getTranslation("info", null, data.name)
-        val conflictsResult =
-          item.getCddaItemRefs("conflicts", CddaType.JSON_FLAG, data.conflicts.toSet())?.toMutableSet()
-            ?: mutableSetOf()
-        data.conflicts.clear()
-        data.conflicts.addAll(conflictsResult)
+        data.conflicts =
+          item.getCddaItemRefs("conflicts", CddaType.JSON_FLAG, if (parent) data.conflicts.toSet() else null)
+            ?.toMutableSet() ?: mutableSetOf()
         data.inherit = item.getBoolean("inherit", data.inherit, true)
         data.craftInherit = item.getBoolean("craft_inherit", data.craftInherit, false)
         data.craftInherit = item.getBoolean("craft_inherit", data.craftInherit, false)

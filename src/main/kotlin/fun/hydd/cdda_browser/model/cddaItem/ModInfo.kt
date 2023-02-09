@@ -22,7 +22,7 @@ class ModInfo : CddaItemData() {
 
   class Parser : CddaItemParser() {
 
-    override fun doParse(item: CddaParseItem, data: CddaItemData): CddaItemRef? {
+    override fun doParse(item: CddaParseItem, data: CddaItemData, parent: Boolean): CddaItemRef? {
       if (data is ModInfo) {
         data.id = item.id
         data.name = item.getTranslation("name", null, data.name)

@@ -2,7 +2,8 @@ package `fun`.hydd.cdda_browser.constant
 
 enum class JsonType(private val str: String) {
   MOD_INFO("mod_info"),
-  JSON_FLAG("json_flag");
+  JSON_FLAG("json_flag"),
+  BODY_PART("body_part");
 
   fun isEquals(other: Any?): Boolean {
     if (this === other) return true
