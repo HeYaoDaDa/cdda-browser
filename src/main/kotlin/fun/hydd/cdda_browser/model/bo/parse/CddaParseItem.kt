@@ -9,10 +9,7 @@ import `fun`.hydd.cdda_browser.model.dao.JsonEntityDao
 import `fun`.hydd.cdda_browser.model.entity.CddaItem
 import `fun`.hydd.cdda_browser.model.entity.CddaMod
 import `fun`.hydd.cdda_browser.model.entity.JsonEntity
-import `fun`.hydd.cdda_browser.util.extension.getCddaItemRef
-import `fun`.hydd.cdda_browser.util.extension.getCollection
-import `fun`.hydd.cdda_browser.util.extension.getHashString
-import `fun`.hydd.cdda_browser.util.extension.getTranslation
+import `fun`.hydd.cdda_browser.util.extension.*
 import io.vertx.core.json.JsonObject
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
@@ -93,9 +90,26 @@ class CddaParseItem {
     else parentValue
   }
 
+  fun getCddaItemRefs(key: String, cddaType: CddaType, parentValue: Collection<CddaItemRef>?):Collection<CddaItemRef>?{
+    var result = json.getCddaItemRefs(key, cddaType)?.toMutableList() ?: (parentValue)?.toMutableList()
+    if (extend != null) {
+      val extendValue = extend!!.getCddaItemRefs(key, cddaType)
+      if (extendValue != null) {
+        if (result != null) result.addAll(extendValue)
+        else result = extendValue.toMutableList()
+      }
+    }
+    if (result != null) {
+      if (delete != null) {
+        val deleteValue = delete!!.getCddaItemRefs(key, cddaType)
+        if (deleteValue != null) result.removeAll(deleteValue)
+      }
+    }
+    return result
+  }
+
   inline fun <reified T : Any> getCollection(key: String, parentValue: Collection<T>?): Collection<T>? {
-    var result = if (json.containsKey(key)) json.getCollection<T>(key)?.toMutableList()
-    else (parentValue)?.toMutableList()
+    var result = json.getCollection<T>(key)?.toMutableList() ?: (parentValue)?.toMutableList()
     if (extend != null) {
       val extendValue = extend!!.getCollection<T>(key)
       if (extendValue != null) {

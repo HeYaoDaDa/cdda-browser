@@ -5,16 +5,27 @@ import `fun`.hydd.cdda_browser.model.base.CddaItemRef
 import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.core.json.get
 import java.lang.instrument.IllegalClassFormatException
 
 inline fun <reified T : Any> JsonObject.getCollection(key: String): Collection<T>? {
-  return this.getJsonArray(key)?.mapNotNull {
+  return this.getOrCreateJsonArray(key)?.mapNotNull {
     if (it is T) it
     else if (Double::class == T::class && it is Int) {
       it.toDouble() as T
     } else throw Exception("$it class is ${it::class} not is ${T::class}")
+  }
+}
+
+fun JsonObject.getOrCreateJsonArray(key: String): JsonArray? {
+  return if (this.containsKey(key)) {
+    val value = this.getValue(key)
+    if (value is JsonArray) value
+    else JsonArray.of(value)
+  } else {
+    null
   }
 }
 
@@ -36,6 +47,13 @@ fun JsonObject.getTranslation(key: String, ctxt: String? = null): Translation? {
 fun JsonObject.getCddaItemRef(key: String, cddaType: CddaType): CddaItemRef? {
   val id = this.getString(key)
   return if (id != null) CddaItemRef(cddaType, id) else null
+}
+
+fun JsonObject.getCddaItemRefs(key: String, cddaType: CddaType): Collection<CddaItemRef>? {
+  return this.getOrCreateJsonArray(key)?.mapNotNull {
+    if (it is String) CddaItemRef(cddaType, it)
+    else throw Exception("$it class is ${it::class} not is CddaItemRef")
+  }
 }
 
 /**
