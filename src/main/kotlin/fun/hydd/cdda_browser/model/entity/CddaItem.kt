@@ -14,8 +14,8 @@ open class CddaItem {
   open var id: Long? = null
 
   @ManyToOne
-  @JoinColumn(name = "cdda_mod_id")
-  open var cddaMod: CddaMod? = null
+  @JoinColumn(name = "mod_id")
+  open var mod: CddaMod? = null
 
   @Enumerated(EnumType.STRING)
   @Column(name = "json_type", nullable = false)

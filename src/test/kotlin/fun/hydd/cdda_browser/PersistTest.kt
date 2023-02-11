@@ -39,12 +39,12 @@ class PersistTest {
       cddaMod.obsolete = false
       cddaMod.core = false
       cddaMod.depModIds = mutableSetOf("dda")
-      cddaMod.cddaVersion = cddaVersion
+      cddaMod.version = cddaVersion
       cddaVersion.cddaMods.add(cddaMod)
       val cddaItem = CddaItem()
       cddaItem.jsonType = JsonType.MOD_INFO
       cddaItem.cddaType = CddaType.MOD_INFO
-      cddaMod.cddaItems.add(cddaItem)
+      cddaMod.items.add(cddaItem)
       val toCompletableFuture = emf.withTransaction { _, _ ->
         emf.withTransaction { session, _ -> session.persist(cddaVersion) }
       }.toCompletableFuture()

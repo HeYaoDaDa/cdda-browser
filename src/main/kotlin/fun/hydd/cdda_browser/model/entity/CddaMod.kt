@@ -24,8 +24,8 @@ open class CddaMod {
     cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
     optional = false
   )
-  @JoinColumn(name = "cdda_version_id", nullable = false)
-  open var cddaVersion: CddaVersion? = null
+  @JoinColumn(name = "version_id", nullable = false)
+  open var version: CddaVersion? = null
 
   @Column(name = "obsolete", nullable = false)
   open var obsolete: Boolean? = null
@@ -33,8 +33,8 @@ open class CddaMod {
   @Column(name = "core", nullable = false)
   open var core: Boolean? = null
 
-  @OneToMany(mappedBy = "cddaMod", cascade = [CascadeType.ALL], orphanRemoval = true)
-  open var cddaItems: MutableSet<CddaItem> = mutableSetOf()
+  @OneToMany(mappedBy = "mod", cascade = [CascadeType.ALL], orphanRemoval = true)
+  open var items: MutableSet<CddaItem> = mutableSetOf()
 
   @ElementCollection
   @CollectionTable(name = "cdda_mod_depModIds", joinColumns = [JoinColumn(name = "owner_id")])

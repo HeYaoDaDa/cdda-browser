@@ -194,7 +194,7 @@ class CddaParseItem {
     }
 
     val cddaItem = CddaItem()
-    cddaItem.cddaMod = mod
+    cddaItem.mod = mod
     cddaItem.cddaType = this.cddaType
     cddaItem.jsonType = this.jsonType
     cddaItem.cddaId = this.id

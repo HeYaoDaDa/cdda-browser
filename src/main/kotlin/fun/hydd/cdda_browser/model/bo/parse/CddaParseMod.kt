@@ -60,8 +60,8 @@ class CddaParseMod {
         }
       }.awaitAll()
     }
-    cddaMod.cddaItems = cddaItems.toMutableSet()
-    cddaMod.cddaVersion = version
+    cddaMod.items = cddaItems.toMutableSet()
+    cddaMod.version = version
     return cddaMod
   }
 

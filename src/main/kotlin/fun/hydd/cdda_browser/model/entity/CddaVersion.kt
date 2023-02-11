@@ -34,7 +34,7 @@ open class CddaVersion {
   @Column(name = "tag_date", nullable = false)
   open var tagDate: LocalDateTime? = null
 
-  @OneToMany(fetch = FetchType.EAGER, mappedBy = "cddaVersion", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var cddaMods: MutableSet<CddaMod> = mutableSetOf()
 
   @OneToMany(mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)

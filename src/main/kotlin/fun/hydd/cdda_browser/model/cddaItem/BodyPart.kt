@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.model.base.CddaItemRef
 import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
@@ -21,6 +22,7 @@ class BodyPart : CddaItemData() {
   var hitSize: Double = 0.0
   var hitDifficulty: Double = 0.0
   var baseHp: Double = 0.0
+  lateinit var flags: MutableSet<CddaItemRef>
 
   class Parser : CddaItemParser() {
     override fun doParse(item: CddaParseItem, data: CddaItemData, parent: Boolean): CddaItemRef? {
@@ -42,6 +44,8 @@ class BodyPart : CddaItemData() {
         data.hitSize = item.getDouble("hit_size", data.hitSize) ?: 0.0
         data.hitDifficulty = item.getDouble("hit_difficulty", data.hitDifficulty) ?: 0.0
         data.baseHp = item.getDouble("base_hp", data.baseHp) ?: 60.0
+        data.flags = item.getCddaItemRefs("flags", CddaType.JSON_FLAG, if (parent) data.flags.toSet() else null)
+          ?.toMutableSet() ?: mutableSetOf()
       } else throw IllegalArgumentException()
       return null
     }
