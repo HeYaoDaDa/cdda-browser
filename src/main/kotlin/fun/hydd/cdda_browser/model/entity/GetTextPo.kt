@@ -18,7 +18,7 @@ open class GetTextPo {
   @JoinColumn(name = "cdda_version_id", nullable = false)
   open var version: CddaVersion? = null
 
-  @ManyToOne(cascade = [CascadeType.ALL], optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], optional = false)
   @JoinColumn(name = "file_entity_id", nullable = false)
   open var fileEntity: FileEntity? = null
 

@@ -10,6 +10,10 @@ object CddaVersionDao {
   }
 
   suspend fun getLatest(factory: SessionFactory): CddaVersion? = factory.withSession {
-    it.createQuery<CddaVersion>("FROM CddaVersion ORDER BY releaseDate DESC").setMaxResults(1).singleResultOrNull
+    it.createQuery<CddaVersion>("FROM CddaVersion ORDER BY tagDate DESC").setMaxResults(1).singleResultOrNull
+  }.await()
+
+  suspend fun getAll(factory: SessionFactory): Collection<CddaVersion> = factory.withSession {
+    it.createQuery<CddaVersion>("FROM CddaVersion ORDER BY tagDate").resultList
   }.await()
 }

@@ -26,8 +26,12 @@ class JsonFlag : CddaItemData() {
         data.id = item.id
         data.info = item.getTranslation("info", null, data.name)
         data.conflicts =
-          item.getCddaItemRefs("conflicts", CddaType.JSON_FLAG, if (parent) data.conflicts.toSet() else null)
-            ?.toMutableSet() ?: mutableSetOf()
+          item.getCddaItemRefs(
+            "conflicts",
+            CddaType.JSON_FLAG,
+            if (parent) data.conflicts.toSet() else null,
+            mutableSetOf()
+          ).toMutableSet()
         data.inherit = item.getBoolean("inherit", data.inherit, true)
         data.craftInherit = item.getBoolean("craft_inherit", data.craftInherit, false)
         data.craftInherit = item.getBoolean("craft_inherit", data.craftInherit, false)

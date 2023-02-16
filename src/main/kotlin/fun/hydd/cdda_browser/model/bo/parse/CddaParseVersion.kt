@@ -21,11 +21,9 @@ class CddaParseVersion {
 
   var experiment: Boolean = true
 
-  lateinit var releaseDate: LocalDateTime
-
   lateinit var tagDate: LocalDateTime
 
-  val cddaMods: MutableCollection<CddaParseMod> = mutableListOf()
+  val mods: MutableCollection<CddaParseMod> = mutableListOf()
 
   suspend fun toCddaVersion(factory: Stage.SessionFactory): CddaVersion {
     val cddaVersion = CddaVersion()
@@ -34,10 +32,9 @@ class CddaParseVersion {
     cddaVersion.commitHash = this.commitHash
     cddaVersion.status = this.status
     cddaVersion.experiment = this.experiment
-    cddaVersion.releaseDate = this.releaseDate
     cddaVersion.tagDate = this.tagDate
-    cddaVersion.cddaMods.addAll(coroutineScope {
-      cddaMods.map {
+    cddaVersion.mods.addAll(coroutineScope {
+      mods.map {
         async {
           val cddaMod = it.toCddaMod(factory, cddaVersion)
           cddaMod

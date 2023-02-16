@@ -90,7 +90,11 @@ class CddaParseItem {
     else parentValue
   }
 
-  fun getCddaItemRefs(key: String, cddaType: CddaType, parentValue: Collection<CddaItemRef>?):Collection<CddaItemRef>?{
+  fun getCddaItemRefs(
+    key: String,
+    cddaType: CddaType,
+    parentValue: Collection<CddaItemRef>?
+  ): Collection<CddaItemRef>? {
     var result = json.getCddaItemRefs(key, cddaType)?.toMutableList() ?: (parentValue)?.toMutableList()
     if (extend != null) {
       val extendValue = extend!!.getCddaItemRefs(key, cddaType)
@@ -106,6 +110,15 @@ class CddaParseItem {
       }
     }
     return result
+  }
+
+  fun getCddaItemRefs(
+    key: String,
+    cddaType: CddaType,
+    parentValue: Collection<CddaItemRef>?,
+    def: Collection<CddaItemRef>
+  ): Collection<CddaItemRef> {
+    return getCddaItemRefs(key, cddaType, parentValue) ?: def
   }
 
   inline fun <reified T : Any> getCollection(key: String, parentValue: Collection<T>?): Collection<T>? {
@@ -169,7 +182,7 @@ class CddaParseItem {
 
   private fun validateProportionalValue(proportionalValue: Double, key: String): Boolean {
     if (proportionalValue < 0 || proportionalValue > 1) {
-      log.warn("${mod.modId}:$path's $json : $proportional's $key value $proportionalValue not in 0-1!")
+      log.warn("${mod.id}:$path's $json : $proportional's $key value $proportionalValue not in 0-1!")
       return false
     }
     return true
@@ -199,6 +212,7 @@ class CddaParseItem {
     cddaItem.jsonType = this.jsonType
     cddaItem.cddaId = this.id
     cddaItem.path = this.path.absolutePath// todo change to relative path
+    cddaItem.abstract = this.abstract
     cddaItem.originalJson = originalJsonEntity
     cddaItem.json = jsonEntity
     return cddaItem

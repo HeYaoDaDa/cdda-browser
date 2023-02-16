@@ -2,6 +2,7 @@ package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
+import `fun`.hydd.cdda_browser.model.bo.restful.CddaRestfulItem
 import org.hibernate.Hibernate
 import javax.persistence.*
 
@@ -31,7 +32,11 @@ open class CddaItem {
   @Column(name = "path", nullable = false)
   open var path: String? = null
 
+  @Column(name = "abstract", nullable = false)
+  open var abstract: Boolean? = false
+
   @ManyToOne(
+    fetch = FetchType.LAZY,
     cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
     optional = false
   )
@@ -40,6 +45,7 @@ open class CddaItem {
 
 
   @ManyToOne(
+    fetch = FetchType.LAZY,
     cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
     optional = false
   )
@@ -55,4 +61,17 @@ open class CddaItem {
   }
 
   override fun hashCode(): Int = javaClass.hashCode()
+
+  fun toCddaRestfulItem(): CddaRestfulItem {
+    return CddaRestfulItem(
+      this.jsonType!!,
+      this.cddaType!!,
+      this.mod!!.modId!!,
+      this.cddaId!!,
+      this.path!!,
+      this.originalJson!!.json!!,
+      this.abstract!!,
+      this.json!!.json!!
+    )
+  }
 }

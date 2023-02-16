@@ -17,7 +17,7 @@ open class JsonEntity {
   open var hashCode: String? = null
 
   @Type(type = "fun.hydd.cdda_browser.model.userType.Json")
-  @Column(columnDefinition = "json", name = "json", nullable = false)
+  @Column(columnDefinition = "jsonb", name = "json", nullable = false)
   open var json: JsonObject? = null
 
   override fun equals(other: Any?): Boolean {

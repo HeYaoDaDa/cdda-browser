@@ -12,7 +12,7 @@ import java.io.File
  * A DTO for the {@link fun.hydd.cdda_browser.entity.CddaMod} entity
  */
 class CddaParseMod {
-  lateinit var modId: String
+  lateinit var id: String
 
   lateinit var name: String
 
@@ -41,17 +41,18 @@ class CddaParseMod {
   }
 
   val allDepModIds: Set<String> by lazy {
-    allDepMods.map { it.modId }.toHashSet()
+    allDepMods.map { it.id }.toHashSet()
   }
 
   suspend fun toCddaMod(factory: Stage.SessionFactory, version: CddaVersion): CddaMod {
     val cddaMod = CddaMod()
-    cddaMod.modId = this.modId
+    cddaMod.modId = this.id
     cddaMod.name = this.name
     cddaMod.description = this.description
     cddaMod.obsolete = this.obsolete
     cddaMod.core = this.core
     cddaMod.depModIds.addAll(this.depModIds)
+    cddaMod.allDepModIds.addAll(this.allDepModIds)
     val cddaItems = coroutineScope {
       cddaItems.map {
         async {

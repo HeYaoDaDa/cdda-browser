@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Paths
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import javax.persistence.Persistence
 
 
@@ -49,7 +48,7 @@ class UpdateVerticle : CoroutineVerticle() {
     for (parseVersion in needUpdateVersions) {
       log.info("start update version ${parseVersion.tagName}")
       GitUtil.hardRestToTag(vertx.eventBus(), parseVersion.tagName)
-      parseVersion.cddaMods.addAll(ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath))
+      parseVersion.mods.addAll(ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath))
       CddaItemParseManager.parseCddaVersion(parseVersion)
       val cddaVersion = parseVersion.toCddaVersion(factory)
       cddaVersion.pos =
@@ -147,7 +146,6 @@ class UpdateVerticle : CoroutineVerticle() {
     result.releaseName = releaseDto.name
     result.commitHash = releaseDto.commitHash
     result.experiment = releaseDto.isExperiment
-    result.releaseDate = releaseDto.date.toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime()
     result.tagName = tag.name
     result.tagDate = tag.date
     result.status = CddaVersionStatus.STOP

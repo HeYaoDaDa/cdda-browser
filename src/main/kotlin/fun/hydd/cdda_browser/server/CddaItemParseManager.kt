@@ -13,9 +13,9 @@ object CddaItemParseManager {
   private val log = LoggerFactory.getLogger(this.javaClass)
 
   fun parseCddaVersion(cddaParseVersion: CddaParseVersion) {
-    val pendQueue = PendQueue(cddaParseVersion.cddaMods)
+    val pendQueue = PendQueue(cddaParseVersion.mods)
     val finalQueue = FinalQueue()
-    cddaParseVersion.cddaMods.forEach { mod ->
+    cddaParseVersion.mods.forEach { mod ->
       val deferQueue = DeferQueue()
       for (cddaType in CddaType.values()) {
         val cddaItems = pendQueue.pop(mod, cddaType).flatMap { parseId(it) }
@@ -25,7 +25,7 @@ object CddaItemParseManager {
       // print defer status
       val deferCddaItem = deferQueue.typeIdItemsMap.values.map { it.values.flatten() }.flatten()
       log.info(
-        "mod ${mod.modId} defer item size is ${deferCddaItem.size}, final size is ${finalQueue.getModItemsSize(mod)}"
+        "mod ${mod.id} defer item size is ${deferCddaItem.size}, final size is ${finalQueue.getModItemsSize(mod)}"
       )
       if (deferCddaItem.isNotEmpty()) {
         deferCddaItem.forEach {

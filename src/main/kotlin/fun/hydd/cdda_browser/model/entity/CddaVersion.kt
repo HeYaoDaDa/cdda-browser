@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
+import `fun`.hydd.cdda_browser.model.bo.restful.CddaRestfulVersion
 import java.time.LocalDateTime
 import javax.persistence.*
 
@@ -28,15 +29,26 @@ open class CddaVersion {
   @Column(name = "experiment", nullable = false)
   open var experiment: Boolean? = null
 
-  @Column(name = "release_date", nullable = false)
-  open var releaseDate: LocalDateTime? = null
-
   @Column(name = "tag_date", nullable = false)
   open var tagDate: LocalDateTime? = null
 
   @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
-  open var cddaMods: MutableSet<CddaMod> = mutableSetOf()
+  open var mods: MutableSet<CddaMod> = mutableSetOf()
 
-  @OneToMany(mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var pos: MutableSet<GetTextPo> = mutableSetOf()
+
+  fun toCddaRestfulVersion(): CddaRestfulVersion {
+    return CddaRestfulVersion(
+      this.id!!,
+      this.releaseName!!,
+      this.tagName!!,
+      this.commitHash!!,
+      this.status!!,
+      this.experiment!!,
+      this.tagDate!!,
+      this.mods.map { it.toCddaRestfulMod() },
+      this.pos.map { it.language!! },
+    )
+  }
 }

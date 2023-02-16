@@ -9,13 +9,13 @@ import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseItem
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class ModInfo : CddaItemData() {
-  var id: String? = null
-  var name: Translation? = null
-  var authors: Set<String> = mutableSetOf()
-  var maintainers: Set<String> = mutableSetOf()
-  var description: Translation? = null
+  lateinit var id: String
+  lateinit var name: Translation
+  lateinit var authors: MutableSet<String>
+  lateinit var maintainers: MutableSet<String>
+  lateinit var description: Translation
   var version: String? = null
-  var dependencies: Set<String> = mutableSetOf()
+  lateinit var dependencies: MutableSet<String>
   var core: Boolean = false
   var obsolete: Boolean = false
   var category: Translation = Translation("NO CATEGORY")
@@ -25,12 +25,15 @@ class ModInfo : CddaItemData() {
     override fun doParse(item: CddaParseItem, data: CddaItemData, parent: Boolean): CddaItemRef? {
       if (data is ModInfo) {
         data.id = item.id
-        data.name = item.getTranslation("name", null, data.name)
-        data.description = item.getTranslation("description", null, data.description)
-        data.authors = item.getCollection("authors", data.authors, emptySet()).toSet()
-        data.maintainers = item.getCollection("maintainers", data.maintainers, emptySet()).toSet()
+        data.name = item.getTranslation("name", null, if (parent) data.name else null) ?: throw Throwable("miss field")
+        data.description = item.getTranslation("description", null, if (parent) data.description else null)
+          ?: throw Throwable("miss field")
+        data.authors = item.getCollection("authors", if (parent) data.authors else null, mutableSetOf()).toMutableSet()
+        data.maintainers =
+          item.getCollection("maintainers", if (parent) data.maintainers else null, mutableSetOf()).toMutableSet()
         data.version = item.getString("version", data.version)
-        data.dependencies = item.getCollection("dependencies", data.dependencies, emptySet()).toSet()
+        data.dependencies =
+          item.getCollection("dependencies", if (parent) data.dependencies else null, mutableSetOf()).toMutableSet()
         data.core = item.getBoolean("core", data.core, false)
         data.obsolete = item.getBoolean("obsolete", data.obsolete, false)
         data.category = getModCategory(item.getString("category", data.category.value, ""))

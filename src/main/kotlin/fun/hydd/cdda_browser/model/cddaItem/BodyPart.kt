@@ -44,8 +44,9 @@ class BodyPart : CddaItemData() {
         data.hitSize = item.getDouble("hit_size", data.hitSize) ?: 0.0
         data.hitDifficulty = item.getDouble("hit_difficulty", data.hitDifficulty) ?: 0.0
         data.baseHp = item.getDouble("base_hp", data.baseHp) ?: 60.0
-        data.flags = item.getCddaItemRefs("flags", CddaType.JSON_FLAG, if (parent) data.flags.toSet() else null)
-          ?.toMutableSet() ?: mutableSetOf()
+        data.flags =
+          item.getCddaItemRefs("flags", CddaType.JSON_FLAG, if (parent) data.flags.toSet() else null, mutableSetOf())
+            .toMutableSet()
       } else throw IllegalArgumentException()
       return null
     }

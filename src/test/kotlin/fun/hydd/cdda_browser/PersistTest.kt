@@ -29,7 +29,6 @@ class PersistTest {
       cddaVersion.tagName = "cataclysm-test-version"
       cddaVersion.experiment = true
       cddaVersion.status = CddaVersionStatus.STOP
-      cddaVersion.releaseDate = LocalDateTime.now()
       cddaVersion.tagDate = LocalDateTime.now()
       cddaVersion.commitHash = "testHash"
       val cddaMod = CddaMod()
@@ -40,7 +39,7 @@ class PersistTest {
       cddaMod.core = false
       cddaMod.depModIds = mutableSetOf("dda")
       cddaMod.version = cddaVersion
-      cddaVersion.cddaMods.add(cddaMod)
+      cddaVersion.mods.add(cddaMod)
       val cddaItem = CddaItem()
       cddaItem.jsonType = JsonType.MOD_INFO
       cddaItem.cddaType = CddaType.MOD_INFO

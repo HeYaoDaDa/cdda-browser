@@ -3,6 +3,7 @@ package `fun`.hydd.cdda_browser
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import `fun`.hydd.cdda_browser.model.codec.UnitCodec
 import `fun`.hydd.cdda_browser.verticles.GitRepoVerticle
+import `fun`.hydd.cdda_browser.verticles.RestfulVerticle
 import `fun`.hydd.cdda_browser.verticles.UpdateVerticle
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
@@ -15,7 +16,7 @@ fun main() {
   DatabindCodec.prettyMapper().registerModule(JavaTimeModule())
 
   vertx.eventBus().registerDefaultCodec(Unit.javaClass, UnitCodec())
-
+  vertx.deployVerticle(RestfulVerticle())
   vertx.deployVerticle(
     GitRepoVerticle(),
     DeploymentOptions()

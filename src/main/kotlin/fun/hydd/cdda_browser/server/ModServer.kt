@@ -89,7 +89,7 @@ object ModServer {
       }.toFile())
     }
     val cddaModDto = CddaParseMod()
-    cddaModDto.modId = jsonObject.getString("id")
+    cddaModDto.id = jsonObject.getString("id")
     cddaModDto.name = jsonObject.getString("name")
     cddaModDto.description = jsonObject.getString("description")
     cddaModDto.obsolete = jsonObject.getBoolean("obsolete", false)
@@ -187,7 +187,7 @@ object ModServer {
    */
   private fun sortMods(mods: List<CddaParseMod>): List<CddaParseMod> {
     val resultModIds = mutableListOf<String>()
-    val myMods = mods.map { Pair(it.modId, it.depModIds.toMutableList()) }.toMutableList()
+    val myMods = mods.map { Pair(it.id, it.depModIds.toMutableList()) }.toMutableList()
     while (myMods.isNotEmpty()) {
       val beforeSize = myMods.size
       myMods.filter { it.second.isEmpty() }.map { resultModIds.add(it.first);myMods.remove(it) }
@@ -196,7 +196,7 @@ object ModServer {
         break
       }
     }
-    return resultModIds.map { modId -> mods.first { it.modId == modId } }
+    return resultModIds.map { modId -> mods.first { it.id == modId } }
   }
 
   /**
@@ -204,7 +204,7 @@ object ModServer {
    * @param soredMods List<CddaMod>
    */
   private fun setAllModDepMods(soredMods: List<CddaParseMod>) {
-    val modMap = soredMods.associateBy { it.modId }
+    val modMap = soredMods.associateBy { it.id }
     soredMods.forEach { superMod -> superMod.depMods = superMod.depModIds.mapNotNull { modMap[it] }.toHashSet() }
   }
 }

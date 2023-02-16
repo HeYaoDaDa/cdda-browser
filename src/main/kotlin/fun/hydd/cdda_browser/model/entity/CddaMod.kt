@@ -1,5 +1,7 @@
 package `fun`.hydd.cdda_browser.model.entity
 
+import `fun`.hydd.cdda_browser.model.bo.restful.CddaRestfulMod
+import `fun`.hydd.cdda_browser.model.bo.restful.CddaWithItemRestfulMod
 import org.hibernate.Hibernate
 import javax.persistence.*
 
@@ -36,10 +38,16 @@ open class CddaMod {
   @OneToMany(mappedBy = "mod", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var items: MutableSet<CddaItem> = mutableSetOf()
 
-  @ElementCollection
+  @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "cdda_mod_depModIds", joinColumns = [JoinColumn(name = "owner_id")])
   @Column(name = "dep_mod_id")
   open var depModIds: MutableSet<String> = mutableSetOf()
+
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "cdda_mod_allDepModIds", joinColumns = [JoinColumn(name = "owner_id")])
+  @Column(name = "all_dep_mod_id")
+  open var allDepModIds: MutableSet<String> = mutableSetOf()
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
@@ -49,4 +57,29 @@ open class CddaMod {
   }
 
   override fun hashCode(): Int = javaClass.hashCode()
+
+  fun toCddaRestfulMod(): CddaRestfulMod {
+    return CddaRestfulMod(
+      this.modId!!,
+      this.name!!,
+      this.description!!,
+      this.obsolete!!,
+      this.core!!,
+      this.depModIds,
+      this.allDepModIds,
+    )
+  }
+
+  fun toCddaWithItemRestfulMod(): CddaWithItemRestfulMod {
+    return CddaWithItemRestfulMod(
+      this.modId!!,
+      this.name!!,
+      this.description!!,
+      this.obsolete!!,
+      this.core!!,
+      this.depModIds,
+      this.allDepModIds,
+      this.items.map { it.toCddaRestfulItem() }
+    )
+  }
 }
