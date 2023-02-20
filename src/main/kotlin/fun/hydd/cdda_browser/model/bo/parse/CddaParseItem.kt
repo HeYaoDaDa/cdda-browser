@@ -36,7 +36,7 @@ class CddaParseItem {
   var extend: JsonObject? = null
   var delete: JsonObject? = null
 
-  var name: Translation? = null
+  lateinit var name: Translation
   var description: Translation? = null
   var data: CddaItemData? = null
 

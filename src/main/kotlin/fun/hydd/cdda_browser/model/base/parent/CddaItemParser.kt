@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.model.base.parent
 
 import `fun`.hydd.cdda_browser.model.base.CddaItemRef
+import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseItem
 import `fun`.hydd.cdda_browser.model.bo.parse.CddaParsedJson
 import io.vertx.core.json.JsonArray
@@ -21,6 +22,10 @@ abstract class CddaItemParser {
 
       else -> throw Exception("Id field is not String")
     }
+  }
+
+  open fun getName(item:CddaParseItem, data: CddaItemData):Translation{
+    return Translation(item.id)
   }
 
   protected abstract fun doParse(item: CddaParseItem, data: CddaItemData, parent: Boolean): CddaItemRef?

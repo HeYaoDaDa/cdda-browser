@@ -14,6 +14,6 @@ data class CddaItemData(
   val json: JsonObject,
   val abstract: Boolean,
   val data: JsonObject,
-  var name: Translation?,
+  var name: Translation,
   var description: Translation?
 )

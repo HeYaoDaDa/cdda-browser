@@ -86,7 +86,7 @@ open class CddaItem {
       this.originalJson!!.json!!,
       this.abstract!!,
       this.json!!.json!!,
-      this.name?.toTranslation(),
+      this.name!!.toTranslation(),
       this.description?.toTranslation()
     )
   }

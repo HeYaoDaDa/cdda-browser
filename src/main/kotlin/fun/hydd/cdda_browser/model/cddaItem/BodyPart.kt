@@ -47,9 +47,12 @@ class BodyPart : CddaItemData() {
         data.flags =
           item.getCddaItemRefs("flags", CddaType.JSON_FLAG, if (parent) data.flags.toSet() else null, mutableSetOf())
             .toMutableSet()
-        item.name = data.name
       } else throw IllegalArgumentException()
       return null
+    }
+
+    override fun getName(item: CddaParseItem, data: CddaItemData): Translation {
+      return if (data is BodyPart) data.name else super.getName(item, data)
     }
 
     override fun newData(): CddaItemData {

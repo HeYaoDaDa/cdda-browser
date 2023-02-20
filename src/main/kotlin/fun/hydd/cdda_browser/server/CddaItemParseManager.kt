@@ -70,6 +70,7 @@ object CddaItemParseManager {
     val ref = parser.parse(cddaItem, parentItem?.data)
     if (ref !== null) deferQueue.add(cddaItem, ref.type, ref.id)
     else {
+      cddaItem.name = parser.getName(cddaItem, cddaItem.data!!)
       finalQueue.add(cddaItem)
       val deferItems = deferQueue.pop(cddaItem.cddaType, cddaItem.id)
       if (deferItems.isNotEmpty()) parseCddaItems(finalQueue, deferQueue, mod, deferItems)
