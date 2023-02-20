@@ -1,16 +1,15 @@
-package `fun`.hydd.cdda_browser.model.bo.restful
+package `fun`.hydd.cdda_browser.model.bo.restful.option
 
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
-import java.time.LocalDateTime
 
-data class CddaRestfulVersion(
-  val id: Long,
+data class CddaVersionOption(
+  val id: String,
   val releaseName: String,
   val tagName: String,
   val commitHash: String,
   val status: CddaVersionStatus,
   val experiment: Boolean,
-  val tagDate: LocalDateTime,
-  val mods: Collection<CddaRestfulMod>,
+  val tagDate: Long,
+  val mods: Collection<CddaModOption>,
   val pos: Collection<String>
 )

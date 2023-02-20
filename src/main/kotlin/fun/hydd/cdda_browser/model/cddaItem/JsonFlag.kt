@@ -39,6 +39,8 @@ class JsonFlag : CddaItemData() {
         data.tasteMod = item.getDouble("taste_mod", data.tasteMod)
         data.restriction = item.getTranslation("restriction", null, data.restriction)
         data.name = item.getTranslation("name", null, data.name)
+        item.name = data.name
+        item.description = data.info
       } else throw IllegalArgumentException()
       return null
     }

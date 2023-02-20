@@ -1,8 +1,9 @@
 package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
-import `fun`.hydd.cdda_browser.model.bo.restful.CddaRestfulVersion
+import `fun`.hydd.cdda_browser.model.bo.restful.option.CddaVersionOption
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import javax.persistence.*
 
 @Entity
@@ -38,16 +39,16 @@ open class CddaVersion {
   @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var pos: MutableSet<GetTextPo> = mutableSetOf()
 
-  fun toCddaRestfulVersion(): CddaRestfulVersion {
-    return CddaRestfulVersion(
-      this.id!!,
+  fun toCddaRestfulVersion(): CddaVersionOption {
+    return CddaVersionOption(
+      this.id!!.toString(),
       this.releaseName!!,
       this.tagName!!,
       this.commitHash!!,
       this.status!!,
       this.experiment!!,
-      this.tagDate!!,
-      this.mods.map { it.toCddaRestfulMod() },
+      this.tagDate!!.toInstant(ZoneOffset.UTC).toEpochMilli(),
+      this.mods.sortedBy { it.id }.map { it.toCddaRestfulMod() },
       this.pos.map { it.language!! },
     )
   }

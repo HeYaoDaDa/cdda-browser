@@ -1,5 +1,6 @@
 package `fun`.hydd.cdda_browser.model.base
 
+import `fun`.hydd.cdda_browser.model.entity.TranslationEntity
 import io.vertx.core.json.JsonObject
 import java.lang.instrument.IllegalClassFormatException
 
@@ -68,4 +69,10 @@ class Translation {
   }
 
 
+  fun toTranslationEntity():TranslationEntity{
+    val result = TranslationEntity()
+    result.value = this.value
+    result.ctxt = this.ctxt
+    return  result
+  }
 }

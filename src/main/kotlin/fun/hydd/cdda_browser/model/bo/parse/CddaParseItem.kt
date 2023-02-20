@@ -36,6 +36,8 @@ class CddaParseItem {
   var extend: JsonObject? = null
   var delete: JsonObject? = null
 
+  var name: Translation? = null
+  var description: Translation? = null
   var data: CddaItemData? = null
 
   private val log = LoggerFactory.getLogger(this.javaClass)
@@ -215,6 +217,8 @@ class CddaParseItem {
     cddaItem.abstract = this.abstract
     cddaItem.originalJson = originalJsonEntity
     cddaItem.json = jsonEntity
+    cddaItem.name = this.name?.toTranslationEntity()
+    cddaItem.description = this.description?.toTranslationEntity()
     return cddaItem
   }
 }

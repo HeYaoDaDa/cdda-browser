@@ -1,7 +1,7 @@
 package `fun`.hydd.cdda_browser.verticles
 
-import `fun`.hydd.cdda_browser.model.bo.restful.CddaRestfulVersion
-import `fun`.hydd.cdda_browser.model.bo.restful.CddaWithItemRestfulMod
+import `fun`.hydd.cdda_browser.model.bo.restful.data.CddaModData
+import `fun`.hydd.cdda_browser.model.bo.restful.option.CddaVersionOption
 import `fun`.hydd.cdda_browser.model.dao.CddaModDao
 import `fun`.hydd.cdda_browser.model.dao.CddaVersionDao
 import `fun`.hydd.cdda_browser.model.dao.GetTextPoDao
@@ -30,32 +30,32 @@ class RestfulVerticle : CoroutineVerticle() {
     val mainRouter = Router.router(vertx)
     mainRouter.route().handler(this::handlerCheckCorsHeaders)
 
-    mainRouter["/versions"].coroutineRespond { getAllVersion() }
-    mainRouter["/mods/:versionId"].coroutineRespond {
-      val versionId: Long = it.pathParam("versionId").toLong()
-      getAllModByVersionId(versionId)
-    }
-    mainRouter["/po/:versionId/:languageCode"].coroutineRespond {
-      val versionId: Long = it.pathParam("versionId").toLong()
-      val languageCode: String = it.pathParam("languageCode")
-      val byteArray = GetTextPoDao.getGetTextPoByVersionIdAndLanguageCode(
-        factory,
-        versionId,
-        languageCode
-      )?.fileEntity?.buffer?.toByteArray()
-      Buffer.buffer(byteArray).toString("utf8")
-    }
+    mainRouter["/option/versions"].coroutineRespond { getAllVersion() }
+    mainRouter["/data/mods/:versionId"].coroutineRespond { getMods(it) }
+    mainRouter["/data/po/:versionId/:languageCode"].coroutineRespond { getPo(it) }
 
     server.requestHandler(mainRouter).listen(8081)
   }
 
-  private suspend fun getAllVersion(): Collection<CddaRestfulVersion> {
+  private suspend fun getAllVersion(): Collection<CddaVersionOption> {
     return CddaVersionDao.getAll(factory).map { it.toCddaRestfulVersion() }
   }
 
-  private suspend fun getAllModByVersionId(versionId: Long): Collection<CddaWithItemRestfulMod> {
+  private suspend fun getMods(it: RoutingContext): Collection<CddaModData> {
+    val versionId: Long = it.pathParam("versionId").toLong()
     val withItemsByVersionId = CddaModDao.getWithItemsByVersionId(factory, versionId)
     return withItemsByVersionId.map { it.toCddaWithItemRestfulMod() }
+  }
+
+  private suspend fun getPo(it: RoutingContext): String? {
+    val versionId: Long = it.pathParam("versionId").toLong()
+    val languageCode: String = it.pathParam("languageCode")
+    val byteArray = GetTextPoDao.getGetTextPoByVersionIdAndLanguageCode(
+      factory,
+      versionId,
+      languageCode
+    )?.fileEntity?.buffer?.toByteArray()
+    return Buffer.buffer(byteArray).toString("utf8")
   }
 
   private fun handlerCheckCorsHeaders(ctx: RoutingContext) {

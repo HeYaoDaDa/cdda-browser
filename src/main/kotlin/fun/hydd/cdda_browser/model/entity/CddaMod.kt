@@ -1,7 +1,8 @@
 package `fun`.hydd.cdda_browser.model.entity
 
-import `fun`.hydd.cdda_browser.model.bo.restful.CddaRestfulMod
-import `fun`.hydd.cdda_browser.model.bo.restful.CddaWithItemRestfulMod
+import `fun`.hydd.cdda_browser.model.base.Translation
+import `fun`.hydd.cdda_browser.model.bo.restful.data.CddaModData
+import `fun`.hydd.cdda_browser.model.bo.restful.option.CddaModOption
 import org.hibernate.Hibernate
 import javax.persistence.*
 
@@ -58,27 +59,21 @@ open class CddaMod {
 
   override fun hashCode(): Int = javaClass.hashCode()
 
-  fun toCddaRestfulMod(): CddaRestfulMod {
-    return CddaRestfulMod(
+  fun toCddaRestfulMod(): CddaModOption {
+    return CddaModOption(
       this.modId!!,
-      this.name!!,
-      this.description!!,
+      Translation(this.name!!),
+      Translation(this.description!!),
       this.obsolete!!,
       this.core!!,
       this.depModIds,
-      this.allDepModIds,
+      this.allDepModIds
     )
   }
 
-  fun toCddaWithItemRestfulMod(): CddaWithItemRestfulMod {
-    return CddaWithItemRestfulMod(
+  fun toCddaWithItemRestfulMod(): CddaModData {
+    return CddaModData(
       this.modId!!,
-      this.name!!,
-      this.description!!,
-      this.obsolete!!,
-      this.core!!,
-      this.depModIds,
-      this.allDepModIds,
       this.items.map { it.toCddaRestfulItem() }
     )
   }

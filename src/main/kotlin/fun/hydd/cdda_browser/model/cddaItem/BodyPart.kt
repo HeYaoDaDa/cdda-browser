@@ -47,6 +47,7 @@ class BodyPart : CddaItemData() {
         data.flags =
           item.getCddaItemRefs("flags", CddaType.JSON_FLAG, if (parent) data.flags.toSet() else null, mutableSetOf())
             .toMutableSet()
+        item.name = data.name
       } else throw IllegalArgumentException()
       return null
     }

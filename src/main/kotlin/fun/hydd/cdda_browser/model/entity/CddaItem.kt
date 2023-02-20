@@ -2,7 +2,7 @@ package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
-import `fun`.hydd.cdda_browser.model.bo.restful.CddaRestfulItem
+import `fun`.hydd.cdda_browser.model.bo.restful.data.CddaItemData
 import org.hibernate.Hibernate
 import javax.persistence.*
 
@@ -35,6 +35,20 @@ open class CddaItem {
   @Column(name = "abstract", nullable = false)
   open var abstract: Boolean? = false
 
+  @Embedded
+  @AttributeOverrides(
+    AttributeOverride(name = "value", column = Column(name = "name_value", length = 1000)),
+      AttributeOverride(name = "ctxt", column = Column(name = "name_ctxt"))
+  )
+  open var name: TranslationEntity? = null
+
+  @Embedded
+  @AttributeOverrides(
+    AttributeOverride(name = "value", column = Column(name = "description_value", length = 1000)),
+    AttributeOverride(name = "ctxt", column = Column(name = "description_ctxt"))
+  )
+  open var description: TranslationEntity? = null
+
   @ManyToOne(
     fetch = FetchType.LAZY,
     cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
@@ -62,8 +76,8 @@ open class CddaItem {
 
   override fun hashCode(): Int = javaClass.hashCode()
 
-  fun toCddaRestfulItem(): CddaRestfulItem {
-    return CddaRestfulItem(
+  fun toCddaRestfulItem(): CddaItemData {
+    return CddaItemData(
       this.jsonType!!,
       this.cddaType!!,
       this.mod!!.modId!!,
@@ -71,7 +85,9 @@ open class CddaItem {
       this.path!!,
       this.originalJson!!.json!!,
       this.abstract!!,
-      this.json!!.json!!
+      this.json!!.json!!,
+      this.name?.toTranslation(),
+      this.description?.toTranslation()
     )
   }
 }

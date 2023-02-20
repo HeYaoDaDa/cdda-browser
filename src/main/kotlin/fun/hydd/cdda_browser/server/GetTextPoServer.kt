@@ -4,6 +4,7 @@ import `fun`.hydd.cdda_browser.model.dao.FileEntityDao
 import `fun`.hydd.cdda_browser.model.entity.CddaVersion
 import `fun`.hydd.cdda_browser.model.entity.FileEntity
 import `fun`.hydd.cdda_browser.model.entity.GetTextPo
+import `fun`.hydd.cdda_browser.util.ProcessUtil
 import io.vertx.core.file.FileSystem
 import io.vertx.kotlin.coroutines.await
 import kotlinx.coroutines.async
@@ -38,7 +39,8 @@ object GetTextPoServer {
     val po = GetTextPo()
     po.version = cddaVersion
     po.language = language
-    val buffer = fileSystem.readFile(path).await().bytes
+    val jsonPath = poFileToJsonFile(path, language)
+    val buffer = fileSystem.readFile(jsonPath).await().bytes
     val messageDigest = MessageDigest.getInstance("SHA-256")
     val hash = messageDigest.digest(buffer)
     val hashCode = hash.fold("") { str, byte -> str + "%02x".format(byte) }
@@ -50,5 +52,17 @@ object GetTextPoServer {
     }
     po.fileEntity = fileEntity
     return po
+  }
+
+  private suspend fun poFileToJsonFile(poFile: String, languageCode: String): String {
+    val outFileFile = Paths.get(
+      System.getProperty("user.home"), "tempDir",
+      "$languageCode.json"
+    ).toFile()
+    if (!outFileFile.parentFile.exists()) {
+      outFileFile.parentFile.mkdirs()
+    }
+    ProcessUtil.po2Json(poFile, outFileFile.absolutePath)
+    return outFileFile.absolutePath
   }
 }
