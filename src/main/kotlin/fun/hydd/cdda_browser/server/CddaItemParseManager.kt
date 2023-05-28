@@ -6,7 +6,6 @@ import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseItem
 import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseMod
 import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseVersion
 import `fun`.hydd.cdda_browser.model.bo.parse.CddaParsedJson
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 object CddaItemParseManager {
@@ -90,20 +89,20 @@ object CddaItemParseManager {
   }
 
   private class PendQueue(mods: Collection<CddaParseMod>) {
-    private val modTypeJsonsMap: MutableMap<CddaParseMod, MutableMap<CddaType, MutableSet<CddaParsedJson>>> =
+    private val modTypeJsonListMap: MutableMap<CddaParseMod, MutableMap<CddaType, MutableSet<CddaParsedJson>>> =
       mutableMapOf()
 
     init {
       for (mod in mods) {
         for (cddaItem in mod.cddaParsedJsons) {
-          val typeJsonsMap = modTypeJsonsMap.getOrElse(mod) {
+          val typeJsonListMap = modTypeJsonListMap.getOrElse(mod) {
             val newTypeItemsMap = mutableMapOf<CddaType, MutableSet<CddaParsedJson>>()
-            modTypeJsonsMap[mod] = newTypeItemsMap
+            modTypeJsonListMap[mod] = newTypeItemsMap
             newTypeItemsMap
           }
-          typeJsonsMap.getOrElse(cddaItem.cddaType) {
+          typeJsonListMap.getOrElse(cddaItem.cddaType) {
             val newItems = mutableSetOf<CddaParsedJson>()
-            typeJsonsMap[cddaItem.cddaType] = newItems
+            typeJsonListMap[cddaItem.cddaType] = newItems
             newItems
           }.add(cddaItem)
         }
@@ -112,7 +111,7 @@ object CddaItemParseManager {
 
     fun pop(mod: CddaParseMod, type: CddaType): MutableSet<CddaParsedJson> {
       val cddaItems =
-        modTypeJsonsMap.getOrDefault(mod, mutableMapOf()).getOrDefault(type, mutableSetOf()).toMutableSet()
+        modTypeJsonListMap.getOrDefault(mod, mutableMapOf()).getOrDefault(type, mutableSetOf()).toMutableSet()
       val result = cddaItems.toMutableSet()
       cddaItems.clear()
       return result
@@ -148,11 +147,6 @@ object CddaItemParseManager {
         if (cddaItems.isNotEmpty()) return cddaItems
       }
       return mutableSetOf()
-    }
-
-    fun printStatus(log: Logger) {
-      val finalItems = modTypeIdItemsMap.values.flatMap { it.values }.flatMap { it.values }.flatten()
-      log.info("Final item size is ${finalItems.size}")
     }
 
     fun getModItemsSize(mod: CddaParseMod): Int {
