@@ -27,7 +27,7 @@ fun main() {
           .setMaxWorkerExecuteTime(20)
           .setMaxWorkerExecuteTimeUnit(TimeUnit.MINUTES)
       ).compose {
-        vertx.deployVerticle(UpdateVerticle())
+        vertx.deployVerticle(UpdateVerticle(), DeploymentOptions().setConfig(config))
       }
     }
 }

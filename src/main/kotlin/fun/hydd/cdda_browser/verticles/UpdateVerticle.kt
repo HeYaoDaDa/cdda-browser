@@ -7,7 +7,6 @@ import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseVersion
 import `fun`.hydd.cdda_browser.model.dao.CddaVersionDao
 import `fun`.hydd.cdda_browser.model.dao.JsonEntityDao
 import `fun`.hydd.cdda_browser.server.CddaItemParseManager
-import `fun`.hydd.cdda_browser.server.GetTextPoServer
 import `fun`.hydd.cdda_browser.server.ModServer
 import `fun`.hydd.cdda_browser.util.GitUtil
 import `fun`.hydd.cdda_browser.util.HttpUtil
@@ -29,35 +28,46 @@ import javax.persistence.Persistence
 
 class UpdateVerticle : CoroutineVerticle() {
   private val log = LoggerFactory.getLogger(this.javaClass)
-  private lateinit var factory: Stage.SessionFactory
-  private val repoDir: File = Paths.get(System.getProperty("user.home"), "Documents", "Cataclysm-DDA").toFile()
+
+  private lateinit var dbFactory: Stage.SessionFactory
+  private lateinit var repoDir: File
 
   override suspend fun start() {
-    log.info("UpdateVerticle start")
+    log.info("UpdateVerticle deploy start")
     super.start()
     init()
     vertx.setTimer(1_000) { launch { update() } }
-    log.info("UpdateVerticle end")
+    log.info("UpdateVerticle deploy end")
   }
 
   private suspend fun update() {
     log.info("update start")
     GitUtil.update(vertx.eventBus())
     val needUpdateVersions = getNeedUpdateVersions()
-    log.info("need update version size is ${needUpdateVersions.size}")
+    log.info(
+      "pend update version size is ${needUpdateVersions.size}" +
+        "\n\t${needUpdateVersions.joinToString("\n\t") { it.tagName }}"
+    )
     for (parseVersion in needUpdateVersions) {
-      log.info("start update version ${parseVersion.tagName}")
+      log.info("update version ${parseVersion.tagName} start")
       GitUtil.hardRestToTag(vertx.eventBus(), parseVersion.tagName)
-      parseVersion.mods.addAll(ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath))
+      val cddaModDtoList = ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
+      log.info(
+        "mod size is ${cddaModDtoList.size}" +
+          "\n\t${cddaModDtoList.joinToString("\n\t") { it.id }}"
+      )
+      parseVersion.mods.addAll(cddaModDtoList)
       CddaItemParseManager.parseCddaVersion(parseVersion)
-      val cddaVersion = parseVersion.toCddaVersion(factory)
-      cddaVersion.pos =
-        GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), factory, repoDir.absolutePath, cddaVersion)
-      CddaVersionDao.save(factory, cddaVersion)
-      log.info("end update version ${parseVersion.tagName}")
-      log.info("\n" + JsonEntityDao.first(factory)!!.json!!.encodePrettily())
+      val cddaVersion = parseVersion.toCddaVersion(dbFactory)
+//      cddaVersion.pos =
+//        GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), dbFactory, repoDir.absolutePath, cddaVersion)
+      CddaVersionDao.save(dbFactory, cddaVersion)
+      log.info("update version ${parseVersion.tagName} end")
+      log.info("\n" + JsonEntityDao.first(dbFactory)!!.json!!.encodePrettily())
     }
     log.info("update end")
+    // todo only use in test
+    vertx.close()
   }
 
   /**
@@ -65,18 +75,19 @@ class UpdateVerticle : CoroutineVerticle() {
    *
    */
   private suspend fun init() {
-    log.info("Start init")
-    factory = awaitBlocking {
+    log.info("init start")
+    repoDir = Paths.get(config.getString("user.home"), config.getJsonObject("repository").getString("path")).toFile()
+    dbFactory = awaitBlocking {
       Persistence.createEntityManagerFactory("cdda-browser").unwrap(Stage.SessionFactory::class.java)
     }
-    log.info("End init")
+    log.info("init end")
   }
 
   private suspend fun getNeedUpdateVersions(): List<CddaParseVersion> {
     val needUpdateVersions = mutableListOf<CddaParseVersion>()
     val repoLatestTag = getRepoLatestVersionTag()
     if (repoLatestTag != null) {
-      val savedLatestVersionDto = CddaVersionDao.getLatest(factory)
+      val savedLatestVersionDto = CddaVersionDao.getLatest(dbFactory)
       if (savedLatestVersionDto == null) {
         log.warn("No saved version, only update latest once version")
         needUpdateVersions.add(getCddaVersionByGitTagDto(repoLatestTag))
