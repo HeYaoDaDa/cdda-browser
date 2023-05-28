@@ -1,9 +1,12 @@
 package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
-import `fun`.hydd.cdda_browser.model.bo.restful.option.CddaVersionOption
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseVersion
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import org.hibernate.reactive.stage.Stage
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import javax.persistence.*
 
 @Entity
@@ -39,17 +42,23 @@ open class CddaVersion {
   @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var pos: MutableSet<GetTextPo> = mutableSetOf()
 
-  fun toCddaRestfulVersion(): CddaVersionOption {
-    return CddaVersionOption(
-      this.id!!.toString(),
-      this.releaseName!!,
-      this.tagName!!,
-      this.commitHash!!,
-      this.status!!,
-      this.experiment!!,
-      this.tagDate!!.toInstant(ZoneOffset.UTC).toEpochMilli(),
-      this.mods.sortedBy { it.id }.map { it.toCddaRestfulMod() },
-      this.pos.map { it.language!! },
-    )
+  companion object {
+    suspend fun of(factory: Stage.SessionFactory, cddaParseVersion: CddaParseVersion): CddaVersion {
+      val cddaVersion = CddaVersion()
+      cddaVersion.releaseName = cddaParseVersion.releaseName
+      cddaVersion.tagName = cddaParseVersion.releaseName
+      cddaVersion.commitHash = cddaParseVersion.commitHash
+      cddaVersion.status = cddaParseVersion.status
+      cddaVersion.experiment = cddaParseVersion.experiment
+      cddaVersion.tagDate = cddaParseVersion.tagDate
+      cddaVersion.mods.addAll(coroutineScope {
+        cddaParseVersion.mods.map {
+          async {
+            CddaMod.of(factory, cddaVersion, it)
+          }
+        }.awaitAll()
+      })
+      return cddaVersion
+    }
   }
 }

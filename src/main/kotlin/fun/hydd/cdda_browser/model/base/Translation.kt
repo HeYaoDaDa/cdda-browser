@@ -57,9 +57,7 @@ class Translation {
     other as Translation
 
     if (value != other.value) return false
-    if (ctxt != other.ctxt) return false
-
-    return true
+    return ctxt == other.ctxt
   }
 
   override fun hashCode(): Int {
@@ -68,11 +66,9 @@ class Translation {
     return result
   }
 
-
-  fun toTranslationEntity():TranslationEntity{
-    val result = TranslationEntity()
-    result.value = this.value
-    result.ctxt = this.ctxt
-    return  result
+  companion object {
+    fun of(translationEntity: TranslationEntity): Translation {
+      return Translation(translationEntity.value!!, translationEntity.ctxt)
+    }
   }
 }

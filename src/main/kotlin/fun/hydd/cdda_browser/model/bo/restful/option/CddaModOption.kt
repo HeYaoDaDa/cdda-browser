@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.model.bo.restful.option
 
 import `fun`.hydd.cdda_browser.model.base.Translation
+import `fun`.hydd.cdda_browser.model.entity.CddaMod
 
 data class CddaModOption(
   val id: String,
@@ -10,4 +11,18 @@ data class CddaModOption(
   val core: Boolean,
   val depModIds: Collection<String>,
   val allDepModIds: Collection<String>,
-)
+) {
+  companion object {
+    fun of(cddaMod: CddaMod): CddaModOption {
+      return CddaModOption(
+        cddaMod.modId!!,
+        Translation(cddaMod.name!!),
+        Translation(cddaMod.description!!),
+        cddaMod.obsolete!!,
+        cddaMod.core!!,
+        cddaMod.depModIds,
+        cddaMod.allDepModIds
+      )
+    }
+  }
+}

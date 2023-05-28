@@ -33,6 +33,12 @@ inline fun <reified T : Any> JsonObject.getCollection(key: String, def: Collecti
   return this.getCollection(key) ?: def
 }
 
+inline fun <reified T : Any> JsonObject.getSet(
+  key: String
+): MutableSet<T>? {
+  return this.getCollection<T>(key)?.toMutableSet()
+}
+
 fun JsonObject.getTranslation(key: String, ctxt: String? = null): Translation? {
   val value = this.get<Any?>(key)
   return if (value != null) {

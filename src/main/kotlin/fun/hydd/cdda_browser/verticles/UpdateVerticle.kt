@@ -3,11 +3,12 @@ package `fun`.hydd.cdda_browser.verticles
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
 import `fun`.hydd.cdda_browser.model.base.GitHubReleaseDto
 import `fun`.hydd.cdda_browser.model.base.GitTagDto
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseMod
 import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseVersion
 import `fun`.hydd.cdda_browser.model.dao.CddaVersionDao
 import `fun`.hydd.cdda_browser.model.dao.JsonEntityDao
+import `fun`.hydd.cdda_browser.model.entity.CddaVersion
 import `fun`.hydd.cdda_browser.server.CddaItemParseManager
-import `fun`.hydd.cdda_browser.server.ModServer
 import `fun`.hydd.cdda_browser.util.GitUtil
 import `fun`.hydd.cdda_browser.util.HttpUtil
 import io.vertx.core.http.HttpMethod
@@ -51,14 +52,14 @@ class UpdateVerticle : CoroutineVerticle() {
     for (parseVersion in needUpdateVersions) {
       log.info("update version ${parseVersion.tagName} start")
       GitUtil.hardRestToTag(vertx.eventBus(), parseVersion.tagName)
-      val cddaModDtoList = ModServer.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
+      val cddaModDtoList = CddaParseMod.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
       log.info(
         "mod size is ${cddaModDtoList.size}" +
           "\n\t${cddaModDtoList.joinToString("\n\t") { it.id }}"
       )
       parseVersion.mods.addAll(cddaModDtoList)
       CddaItemParseManager.parseCddaVersion(parseVersion)
-      val cddaVersion = parseVersion.toCddaVersion(dbFactory)
+      val cddaVersion = CddaVersion.of(dbFactory, parseVersion)
 //      cddaVersion.pos =
 //        GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), dbFactory, repoDir.absolutePath, cddaVersion)
       CddaVersionDao.save(dbFactory, cddaVersion)

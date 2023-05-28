@@ -1,9 +1,11 @@
 package `fun`.hydd.cdda_browser.model.entity
 
-import `fun`.hydd.cdda_browser.model.base.Translation
-import `fun`.hydd.cdda_browser.model.bo.restful.data.CddaModData
-import `fun`.hydd.cdda_browser.model.bo.restful.option.CddaModOption
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseMod
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.hibernate.Hibernate
+import org.hibernate.reactive.stage.Stage
 import javax.persistence.*
 
 @Entity
@@ -59,22 +61,26 @@ open class CddaMod {
 
   override fun hashCode(): Int = javaClass.hashCode()
 
-  fun toCddaRestfulMod(): CddaModOption {
-    return CddaModOption(
-      this.modId!!,
-      Translation(this.name!!),
-      Translation(this.description!!),
-      this.obsolete!!,
-      this.core!!,
-      this.depModIds,
-      this.allDepModIds
-    )
-  }
-
-  fun toCddaWithItemRestfulMod(): CddaModData {
-    return CddaModData(
-      this.modId!!,
-      this.items.map { it.toCddaRestfulItem() }
-    )
+  companion object {
+    suspend fun of(factory: Stage.SessionFactory, version: CddaVersion, cddaParseMod: CddaParseMod): CddaMod {
+      val cddaMod = CddaMod()
+      cddaMod.modId = cddaParseMod.id
+      cddaMod.name = cddaParseMod.name
+      cddaMod.description = cddaParseMod.description
+      cddaMod.obsolete = cddaParseMod.obsolete
+      cddaMod.core = cddaParseMod.core
+      cddaMod.depModIds.addAll(cddaParseMod.depModIds)
+      cddaMod.allDepModIds.addAll(cddaParseMod.allDepModIds)
+      val cddaItems = coroutineScope {
+        cddaParseMod.cddaItems.map {
+          async {
+            CddaItem.of(factory, cddaMod, it)
+          }
+        }.awaitAll()
+      }
+      cddaMod.items = cddaItems.toMutableSet()
+      cddaMod.version = version
+      return cddaMod
+    }
   }
 }

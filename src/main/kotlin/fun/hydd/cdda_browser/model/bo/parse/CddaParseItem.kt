@@ -5,13 +5,11 @@ import `fun`.hydd.cdda_browser.constant.JsonType
 import `fun`.hydd.cdda_browser.model.base.CddaItemRef
 import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
-import `fun`.hydd.cdda_browser.model.dao.JsonEntityDao
-import `fun`.hydd.cdda_browser.model.entity.CddaItem
-import `fun`.hydd.cdda_browser.model.entity.CddaMod
-import `fun`.hydd.cdda_browser.model.entity.JsonEntity
-import `fun`.hydd.cdda_browser.util.extension.*
+import `fun`.hydd.cdda_browser.util.extension.getCddaItemRef
+import `fun`.hydd.cdda_browser.util.extension.getCddaItemRefs
+import `fun`.hydd.cdda_browser.util.extension.getCollection
+import `fun`.hydd.cdda_browser.util.extension.getTranslation
 import io.vertx.core.json.JsonObject
-import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -190,35 +188,21 @@ class CddaParseItem {
     return true
   }
 
-  suspend fun toCddaItem(factory: Stage.SessionFactory, mod: CddaMod): CddaItem {
-    val originalJsonHash = this.json.getHashString()
-    var originalJsonEntity = JsonEntityDao.findByHashCode(factory, originalJsonHash)
-    if (originalJsonEntity == null) {
-      originalJsonEntity = JsonEntity()
-      originalJsonEntity.json = this.json
-      originalJsonEntity.hashCode = originalJsonHash
+  companion object {
+    fun of(cddaParsedJson: CddaParsedJson): CddaParseItem {
+      val cddaParseItem = CddaParseItem()
+      cddaParseItem.jsonType = cddaParsedJson.jsonType
+      cddaParseItem.cddaType = cddaParsedJson.cddaType
+      cddaParseItem.mod = cddaParsedJson.mod
+      cddaParseItem.path = cddaParsedJson.path
+      cddaParseItem.json = cddaParsedJson.json
+      cddaParseItem.copyFrom = cddaParsedJson.copyFrom
+      cddaParseItem.abstract = cddaParsedJson.abstract
+      cddaParseItem.relative = cddaParsedJson.relative
+      cddaParseItem.proportional = cddaParsedJson.proportional
+      cddaParseItem.extend = cddaParsedJson.extend
+      cddaParseItem.delete = cddaParsedJson.delete
+      return cddaParseItem
     }
-
-    val json = JsonObject.mapFrom(this.data!!)
-    val jsonHash = json.getHashString()
-    var jsonEntity = JsonEntityDao.findByHashCode(factory, jsonHash)
-    if (jsonEntity == null) {
-      jsonEntity = JsonEntity()
-      jsonEntity.json = json
-      jsonEntity.hashCode = jsonHash
-    }
-
-    val cddaItem = CddaItem()
-    cddaItem.mod = mod
-    cddaItem.cddaType = this.cddaType
-    cddaItem.jsonType = this.jsonType
-    cddaItem.cddaId = this.id
-    cddaItem.path = this.path.absolutePath// todo change to relative path
-    cddaItem.abstract = this.abstract
-    cddaItem.originalJson = originalJsonEntity
-    cddaItem.json = jsonEntity
-    cddaItem.name = this.name?.toTranslationEntity()
-    cddaItem.description = this.description?.toTranslationEntity()
-    return cddaItem
   }
 }

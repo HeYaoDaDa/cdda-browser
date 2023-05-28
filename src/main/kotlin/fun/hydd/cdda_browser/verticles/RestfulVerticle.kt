@@ -38,13 +38,13 @@ class RestfulVerticle : CoroutineVerticle() {
   }
 
   private suspend fun getAllVersion(): Collection<CddaVersionOption> {
-    return CddaVersionDao.getAll(factory).map { it.toCddaRestfulVersion() }
+    return CddaVersionDao.getAll(factory).map(CddaVersionOption::of)
   }
 
   private suspend fun getMods(it: RoutingContext): Collection<CddaModData> {
     val versionId: Long = it.pathParam("versionId").toLong()
     val withItemsByVersionId = CddaModDao.getWithItemsByVersionId(factory, versionId)
-    return withItemsByVersionId.map { it.toCddaWithItemRestfulMod() }
+    return withItemsByVersionId.map(CddaModData::of)
   }
 
   private suspend fun getPo(it: RoutingContext): String? {

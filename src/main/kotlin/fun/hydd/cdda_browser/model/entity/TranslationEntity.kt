@@ -9,7 +9,12 @@ open class TranslationEntity {
 
   var ctxt: String? = null
 
-  fun toTranslation(): Translation {
-    return Translation(this.value!!, this.ctxt)
+  companion object {
+    fun of(translation: Translation): TranslationEntity {
+      val result = TranslationEntity()
+      result.value = translation.value
+      result.ctxt = translation.ctxt
+      return result
+    }
   }
 }

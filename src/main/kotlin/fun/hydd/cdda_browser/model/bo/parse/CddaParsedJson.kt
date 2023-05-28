@@ -18,20 +18,4 @@ class CddaParsedJson {
   var proportional: JsonObject? = null
   var extend: JsonObject? = null
   var delete: JsonObject? = null
-
-  fun toCddaParseItem(): CddaParseItem {
-    val cddaParseItem = CddaParseItem()
-    cddaParseItem.jsonType = this.jsonType
-    cddaParseItem.cddaType = this.cddaType
-    cddaParseItem.mod = this.mod
-    cddaParseItem.path = this.path
-    cddaParseItem.json = this.json
-    cddaParseItem.copyFrom = this.copyFrom
-    cddaParseItem.abstract = this.abstract
-    cddaParseItem.relative = this.relative
-    cddaParseItem.proportional = this.proportional
-    cddaParseItem.extend = this.extend
-    cddaParseItem.delete = this.delete
-    return cddaParseItem
-  }
 }

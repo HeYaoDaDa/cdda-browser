@@ -83,7 +83,7 @@ object CddaItemParseManager {
     if (ids.isEmpty()) throw Exception("Parse id is empty")
     return ids
       .map {
-        val cddaItemDto = cddaParsedJson.toCddaParseItem()
+        val cddaItemDto = CddaParseItem.of(cddaParsedJson)
         cddaItemDto.id = it
         cddaItemDto
       }
