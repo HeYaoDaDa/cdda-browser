@@ -1,9 +1,9 @@
 package `fun`.hydd.cdda_browser.verticles
 
 import `fun`.hydd.cdda_browser.constant.EventBusConstant
+import io.vertx.core.eventbus.EventBus
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
@@ -11,23 +11,24 @@ import org.eclipse.jgit.revwalk.RevObject
 import org.eclipse.jgit.revwalk.RevTag
 import org.eclipse.jgit.revwalk.RevWalk
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.nio.file.Paths
 import java.util.*
 
 class GitRepoVerticle : CoroutineVerticle() {
-  private val repoDir: File = Paths.get(System.getProperty("user.home"), "Documents", "Cataclysm-DDA").toFile()
-  private val repoRemoteURL = "https://github.com/CleverRaven/Cataclysm-DDA.git"
-  private lateinit var git: Git
-
   private val log = LoggerFactory.getLogger(this.javaClass)
+
+  private lateinit var git: Git
 
 
   override suspend fun start() {
-    log.info("GitRepoVerticle start")
+    log.info("GitRepoVerticle deploy start")
     super.start()
-    init()
-    val eventBus = vertx.eventBus()
+    initGit()
+    initEventBus(vertx.eventBus())
+    log.info("GitRepoVerticle deploy end")
+  }
+
+  private fun initEventBus(eventBus: EventBus) {
     eventBus.consumer<Unit>(EventBusConstant.GIT_REPO_UPDATE) {
       it.reply(update())
     }
@@ -43,7 +44,6 @@ class GitRepoVerticle : CoroutineVerticle() {
     eventBus.consumer<Unit>(EventBusConstant.GIT_REPO_GET_TAG_LIST) {
       it.reply(getTagList())
     }
-    log.info("GitRepoVerticle end")
   }
 
   override suspend fun stop() {
@@ -55,18 +55,22 @@ class GitRepoVerticle : CoroutineVerticle() {
    * Init Cdda Git Repo
    *
    */
-  private fun init() {
+  private fun initGit() {
     log.info("init start")
+    val repoDir =
+      Paths.get(config.getString("user.home"), config.getJsonObject("repository").getString("path")).toFile()
+    log.info("repoDir: ${repoDir.absolutePath}")
     git = if (repoDir.exists()) {
       log.info("repoDir is exists")
       Git.open(repoDir)
     } else {
       log.info("repoDir is not exists")
-      log.info("clone repo to ${repoDir.absolutePath}")
-      Git.cloneRepository()
-        .setDirectory(repoDir)
-        .setURI(repoRemoteURL)
-        .setBranch(Constants.MASTER).call()
+      throw UnsupportedOperationException()
+//      todo, test not need
+//      Git.cloneRepository()
+//        .setDirectory(repoDir)
+//        .setURI(config.getJsonObject("repository").getString("url"))
+//        .setBranch(Constants.MASTER).call()
     }
     log.info("init end")
   }
@@ -77,7 +81,8 @@ class GitRepoVerticle : CoroutineVerticle() {
    */
   private fun update() {
     log.info("update start")
-    git.pull().setRemote(Constants.DEFAULT_REMOTE_NAME).setRemoteBranchName(Constants.MASTER).call()
+//    todo test not need
+//    git.pull().setRemote(Constants.DEFAULT_REMOTE_NAME).setRemoteBranchName(Constants.MASTER).call()
     log.info("update end")
   }
 
@@ -87,12 +92,14 @@ class GitRepoVerticle : CoroutineVerticle() {
    * @param tagName rest to tag name
    */
   private fun hardRestToTag(tagName: String) {
-    log.info("Start rest to tag name: $tagName")
-    git.reset()
-      .setMode(ResetCommand.ResetType.HARD)
-      .setRef(tagName)
-      .call()
-    log.info("End rest to tag name: $tagName")
+    log.info("hardRestToTag start")
+    log.info("tag name is: $tagName")
+//    todo test not need
+//    git.reset()
+//      .setMode(ResetCommand.ResetType.HARD)
+//      .setRef(tagName)
+//      .call()
+    log.info("hardRestToTag end")
   }
 
   /**
