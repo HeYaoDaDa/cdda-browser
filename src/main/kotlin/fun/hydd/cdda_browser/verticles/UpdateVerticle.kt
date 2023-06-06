@@ -1,9 +1,11 @@
 package `fun`.hydd.cdda_browser.verticles
 
-import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseMod
-import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseVersion
+import `fun`.hydd.cdda_browser.model.CddaModDto
+import `fun`.hydd.cdda_browser.model.CddaModJsonEntity
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaVersionDto
 import `fun`.hydd.cdda_browser.model.dao.CddaVersionDao
-import `fun`.hydd.cdda_browser.model.dao.JsonEntityDao
+import `fun`.hydd.cdda_browser.model.entity.CddaItem
+import `fun`.hydd.cdda_browser.model.entity.CddaMod
 import `fun`.hydd.cdda_browser.model.entity.CddaVersion
 import `fun`.hydd.cdda_browser.server.CddaItemParseManager
 import `fun`.hydd.cdda_browser.util.GitUtil
@@ -34,7 +36,7 @@ class UpdateVerticle : CoroutineVerticle() {
   private suspend fun update() {
     log.info("update start")
     GitUtil.update(vertx.eventBus())
-    val pendUpdateVersions = CddaParseVersion.getPendUpdateVersions(vertx, dbFactory)
+    val pendUpdateVersions = CddaVersionDto.getPendUpdateVersions(vertx, dbFactory)
     log.info(
       "pend update version size is ${pendUpdateVersions.size}" +
         "\n\t${pendUpdateVersions.joinToString("\n\t") { it.tagName }}"
@@ -42,19 +44,24 @@ class UpdateVerticle : CoroutineVerticle() {
     for (pendUpdateVersion in pendUpdateVersions) {
       log.info("update version ${pendUpdateVersion.tagName} start")
       GitUtil.hardRestToTag(vertx.eventBus(), pendUpdateVersion.tagName)
-      val cddaModDtoList = CddaParseMod.getCddaModDtoList(vertx.fileSystem(), repoDir.absolutePath)
+      val mods = CddaModDto.ofList(CddaModJsonEntity.getCddaModJsonEntityList(vertx.fileSystem(), repoDir.absolutePath))
       log.info(
-        "mod size is ${cddaModDtoList.size}" +
-          "\n\t${cddaModDtoList.joinToString("\n\t") { it.id }}"
+        "mod size is ${mods.size}" +
+          "\n\t[${mods.joinToString(", ") { it.id }}]"
       )
-      pendUpdateVersion.mods.addAll(cddaModDtoList)
-      CddaItemParseManager.parseCddaVersion(pendUpdateVersion)
-      val cddaVersion = CddaVersion.of(dbFactory, pendUpdateVersion)
-//      cddaVersion.pos =
-//        GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), dbFactory, repoDir.absolutePath, cddaVersion)
+      val finalCddaItems = CddaItemParseManager.process(vertx.fileSystem(), mods)
+      val cddaVersion = CddaVersion.of(pendUpdateVersion)
+      val cddaMods = mods.map { CddaMod.of(it) }
+      cddaMods.forEach { it.version = cddaVersion }
+      cddaVersion.mods.addAll(cddaMods)
+      val cddaItems = CddaItem.ofList(dbFactory, repoDir.toPath(), finalCddaItems)
+      cddaItems.forEach { it.cddaVersion = cddaVersion }
+      cddaVersion.cddaItems.addAll(cddaItems)
+//      val pos = GetTextPoServer.getTextPosByRepo(vertx.fileSystem(), dbFactory, repoDir.absolutePath)
+//      pos.forEach { it.version = cddaVersion }
+//      cddaVersion.pos.addAll(pos)
       CddaVersionDao.save(dbFactory, cddaVersion)
       log.info("update version ${pendUpdateVersion.tagName} end")
-      log.info("\n" + JsonEntityDao.first(dbFactory)!!.json!!.encodePrettily())
     }
     log.info("update end")
     // todo only use in test

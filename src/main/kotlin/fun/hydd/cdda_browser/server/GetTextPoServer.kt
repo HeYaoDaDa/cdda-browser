@@ -1,7 +1,6 @@
 package `fun`.hydd.cdda_browser.server
 
 import `fun`.hydd.cdda_browser.model.dao.FileEntityDao
-import `fun`.hydd.cdda_browser.model.entity.CddaVersion
 import `fun`.hydd.cdda_browser.model.entity.FileEntity
 import `fun`.hydd.cdda_browser.model.entity.GetTextPo
 import `fun`.hydd.cdda_browser.util.ProcessUtil
@@ -19,25 +18,22 @@ object GetTextPoServer {
     fileSystem: FileSystem,
     factory: SessionFactory,
     repoPath: String,
-    cddaVersion: CddaVersion
   ): MutableSet<GetTextPo> = coroutineScope {
     Paths.get(repoPath, "lang", "po").toFile().listFiles()!!
       .filter { it.isFile && it.name.endsWith(".po") }
       .map { Pair(it.name.replace("_", "-").replace(".po", ""), it.absolutePath) }
       .map {
-        async { getTextPo(fileSystem, factory, cddaVersion, it.first, it.second) }
+        async { getTextPo(fileSystem, factory, it.first, it.second) }
       }.awaitAll().toMutableSet()
   }
 
   private suspend fun getTextPo(
     fileSystem: FileSystem,
     factory: SessionFactory,
-    cddaVersion: CddaVersion,
     language: String,
     path: String
   ): GetTextPo {
     val po = GetTextPo()
-    po.version = cddaVersion
     po.language = language
     val jsonPath = poFileToJsonFile(path, language)
     val buffer = fileSystem.readFile(jsonPath).await().bytes

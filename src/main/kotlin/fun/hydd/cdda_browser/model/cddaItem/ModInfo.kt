@@ -1,11 +1,13 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import `fun`.hydd.cdda_browser.annotation.CddaItem
+import `fun`.hydd.cdda_browser.model.FinalResult
+import `fun`.hydd.cdda_browser.model.ModOrder
 import `fun`.hydd.cdda_browser.model.base.CddaItemRef
 import `fun`.hydd.cdda_browser.model.base.Translation
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
 import `fun`.hydd.cdda_browser.model.base.parent.CddaItemParser
-import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseItem
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class ModInfo : CddaItemData() {
@@ -21,33 +23,25 @@ class ModInfo : CddaItemData() {
   var category: Translation = Translation("NO CATEGORY")
 
   class Parser : CddaItemParser() {
-
-    override fun doParse(item: CddaParseItem, data: CddaItemData, parent: Boolean): CddaItemRef? {
-      if (data is ModInfo) {
-        data.id = item.id
-        data.name = item.getTranslation("name", null, if (parent) data.name else null) ?: throw Throwable("miss field")
-        data.description = item.getTranslation("description", null, if (parent) data.description else null)
-          ?: throw Throwable("miss field")
-        data.authors = item.getCollection("authors", if (parent) data.authors else null, mutableSetOf()).toMutableSet()
-        data.maintainers =
-          item.getCollection("maintainers", if (parent) data.maintainers else null, mutableSetOf()).toMutableSet()
-        data.version = item.getString("version", data.version)
-        data.dependencies =
-          item.getCollection("dependencies", if (parent) data.dependencies else null, mutableSetOf()).toMutableSet()
-        data.core = item.getBoolean("core", data.core, false)
-        data.obsolete = item.getBoolean("obsolete", data.obsolete, false)
-        data.category = getModCategory(item.getString("category", data.category.value, ""))
-        item.description = data.description
-      } else throw IllegalArgumentException()
-      return null
-    }
-
-    override fun getName(item: CddaParseItem, data: CddaItemData): Translation {
-      return if (data is ModInfo) data.name else super.getName(item, data)
-    }
-
-    override fun newData(): CddaItemData {
-      return ModInfo()
+    override fun parse(jsonEntity: Any, dependencies: MutableMap<CddaItemRef, ModOrder>): FinalResult {
+      if (jsonEntity is JsonEntity) {
+        val finalItem = ModInfo()
+        finalItem.id = jsonEntity.id
+        finalItem.name = jsonEntity.name
+        finalItem.description = jsonEntity.description
+        finalItem.authors = jsonEntity.authors.toMutableSet()
+        finalItem.maintainers = jsonEntity.maintainers.toMutableSet()
+        finalItem.version = jsonEntity.version
+        finalItem.dependencies = jsonEntity.dependencies.toMutableSet()
+        finalItem.core = jsonEntity.core
+        finalItem.obsolete = jsonEntity.obsolete
+        finalItem.category = getModCategory(jsonEntity.category)
+        finalItem.itemName = finalItem.name
+        finalItem.description = finalItem.description
+        return FinalResult(finalItem, dependencies, null)
+      } else {
+        throw Exception("class not match, class is ${jsonEntity::class}")
+      }
     }
 
     /**
@@ -74,5 +68,19 @@ class ModInfo : CddaItemData() {
       }
       return Translation(message)
     }
+  }
+
+  @CddaItem
+  class JsonEntity() {
+    lateinit var id: String
+    lateinit var name: Translation
+    var authors: MutableList<String> = mutableListOf()
+    var maintainers: MutableList<String> = mutableListOf()
+    lateinit var description: Translation
+    var version: String? = null
+    var dependencies: MutableList<String> = mutableListOf()
+    var core: Boolean = false
+    var obsolete: Boolean = false
+    var category: String = "NO CATEGORY"
   }
 }

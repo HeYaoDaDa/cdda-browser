@@ -23,7 +23,7 @@ data class CddaItemData(
       return CddaItemData(
         cddaItem.jsonType!!,
         cddaItem.cddaType!!,
-        cddaItem.mod!!.modId!!,
+        "dda",//todo
         cddaItem.cddaId!!,
         cddaItem.path!!,
         cddaItem.originalJson!!.json!!,

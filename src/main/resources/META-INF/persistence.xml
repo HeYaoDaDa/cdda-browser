@@ -32,9 +32,9 @@
       <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
 
       <!-- SQL statement logging -->
-      <property name="hibernate.show_sql" value="true"/>
-      <property name="hibernate.format_sql" value="true"/>
-      <property name="hibernate.highlight_sql" value="true"/>
+      <property name="hibernate.show_sql" value="false"/>
+      <property name="hibernate.format_sql" value="false"/>
+      <property name="hibernate.highlight_sql" value="false"/>
 
       <property name="hibernate.jdbc.batch_size" value="1000"/>
       <property name="hibernate.implicit_naming_strategy"

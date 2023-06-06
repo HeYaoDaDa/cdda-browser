@@ -1,11 +1,7 @@
 package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaVersionStatus
-import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseVersion
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import org.hibernate.reactive.stage.Stage
+import `fun`.hydd.cdda_browser.model.bo.parse.CddaVersionDto
 import java.time.LocalDateTime
 import javax.persistence.*
 
@@ -39,25 +35,21 @@ open class CddaVersion {
   @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var mods: MutableSet<CddaMod> = mutableSetOf()
 
+  @OneToMany(fetch = FetchType.LAZY, mappedBy = "cddaVersion", cascade = [CascadeType.ALL], orphanRemoval = true)
+  open var cddaItems: MutableSet<CddaItem> = mutableSetOf()
+
   @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var pos: MutableSet<GetTextPo> = mutableSetOf()
 
   companion object {
-    suspend fun of(factory: Stage.SessionFactory, cddaParseVersion: CddaParseVersion): CddaVersion {
+    fun of(cddaVersionDto: CddaVersionDto): CddaVersion {
       val cddaVersion = CddaVersion()
-      cddaVersion.releaseName = cddaParseVersion.releaseName
-      cddaVersion.tagName = cddaParseVersion.releaseName
-      cddaVersion.commitHash = cddaParseVersion.commitHash
-      cddaVersion.status = cddaParseVersion.status
-      cddaVersion.experiment = cddaParseVersion.experiment
-      cddaVersion.tagDate = cddaParseVersion.tagDate
-      cddaVersion.mods.addAll(coroutineScope {
-        cddaParseVersion.mods.map {
-          async {
-            CddaMod.of(factory, cddaVersion, it)
-          }
-        }.awaitAll()
-      })
+      cddaVersion.releaseName = cddaVersionDto.releaseName
+      cddaVersion.tagName = cddaVersionDto.releaseName
+      cddaVersion.commitHash = cddaVersionDto.commitHash
+      cddaVersion.status = cddaVersionDto.status
+      cddaVersion.experiment = cddaVersionDto.experiment
+      cddaVersion.tagDate = cddaVersionDto.tagDate
       return cddaVersion
     }
   }

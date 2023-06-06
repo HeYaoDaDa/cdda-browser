@@ -66,6 +66,11 @@ class Translation {
     return result
   }
 
+  override fun toString(): String {
+    return "Translation(value='$value', ctxt=$ctxt)"
+  }
+
+
   companion object {
     fun of(translationEntity: TranslationEntity): Translation {
       return Translation(translationEntity.value!!, translationEntity.ctxt)

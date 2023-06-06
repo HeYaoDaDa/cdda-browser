@@ -2,13 +2,15 @@ package `fun`.hydd.cdda_browser.model.entity
 
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
-import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseItem
+import `fun`.hydd.cdda_browser.model.FinalCddaItem
 import `fun`.hydd.cdda_browser.model.dao.JsonEntityDao
 import `fun`.hydd.cdda_browser.util.extension.getHashString
 import io.vertx.core.json.JsonObject
 import org.hibernate.Hibernate
 import org.hibernate.reactive.stage.Stage
+import java.nio.file.Path
 import javax.persistence.*
+import kotlin.io.path.relativeTo
 
 @Entity
 @Table(name = "cdda_item")
@@ -18,9 +20,10 @@ open class CddaItem {
   @Column(name = "id", nullable = false)
   open var id: Long? = null
 
-  @ManyToOne
-  @JoinColumn(name = "mod_id")
-  open var mod: CddaMod? = null
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "cdda_item_modOrder", joinColumns = [JoinColumn(name = "owner_id")])
+  @Column(name = "mod_order")
+  open var modOrder: MutableSet<String> = mutableSetOf()
 
   @Enumerated(EnumType.STRING)
   @Column(name = "json_type", nullable = false)
@@ -61,7 +64,6 @@ open class CddaItem {
   @JoinColumn(name = "original_json_id", nullable = false)
   open var originalJson: JsonEntity? = null
 
-
   @ManyToOne(
     fetch = FetchType.LAZY,
     cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH],
@@ -69,6 +71,10 @@ open class CddaItem {
   )
   @JoinColumn(name = "json_id", nullable = false)
   open var json: JsonEntity? = null
+
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "cdda_version_id", nullable = false)
+  open var cddaVersion: CddaVersion? = null
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -81,37 +87,54 @@ open class CddaItem {
   override fun hashCode(): Int = javaClass.hashCode()
 
   companion object {
-    suspend fun of(factory: Stage.SessionFactory, mod: CddaMod, cddaParseItem: CddaParseItem): CddaItem {
-      val originalJsonHash = cddaParseItem.json.getHashString()
-      var originalJsonEntity = JsonEntityDao.findByHashCode(factory, originalJsonHash)
+    suspend fun ofList(
+      factory: Stage.SessionFactory,
+      repoPath: Path,
+      finalCddaItems: List<FinalCddaItem>
+    ): List<CddaItem> {
+      val currentJsonEntityMap = mutableMapOf<String, JsonEntity>()
+      return finalCddaItems.map { of(factory, repoPath, currentJsonEntityMap, it) }
+    }
+
+    suspend fun of(
+      factory: Stage.SessionFactory,
+      repoPath: Path,
+      currentJsonEntityMap: MutableMap<String, JsonEntity>,
+      finalCddaItem: FinalCddaItem,
+    ): CddaItem {
+      val originalJsonHash = finalCddaItem.originalJson.getHashString()
+      var originalJsonEntity =
+        JsonEntityDao.findByHashCode(factory, originalJsonHash) ?: currentJsonEntityMap[originalJsonHash]
       if (originalJsonEntity == null) {
         originalJsonEntity = JsonEntity()
-        originalJsonEntity.json = cddaParseItem.json
+        originalJsonEntity.json = finalCddaItem.originalJson
         originalJsonEntity.hashCode = originalJsonHash
+        currentJsonEntityMap[originalJsonHash] = originalJsonEntity
       }
 
-      val json = JsonObject.mapFrom(cddaParseItem.data!!)
+      val json = JsonObject.mapFrom(finalCddaItem.cddaItemData)
       val jsonHash = json.getHashString()
-      var jsonEntity = JsonEntityDao.findByHashCode(factory, jsonHash)
+      var jsonEntity = JsonEntityDao.findByHashCode(factory, jsonHash) ?: currentJsonEntityMap[jsonHash]
       if (jsonEntity == null) {
         jsonEntity = JsonEntity()
         jsonEntity.json = json
         jsonEntity.hashCode = jsonHash
+        currentJsonEntityMap[jsonHash] = jsonEntity
       }
 
       val cddaItem = CddaItem()
-      cddaItem.mod = mod
-      cddaItem.cddaType = cddaParseItem.cddaType
-      cddaItem.jsonType = cddaParseItem.jsonType
-      cddaItem.cddaId = cddaParseItem.id
-      cddaItem.path = cddaParseItem.path.absolutePath// todo change to relative path
-      cddaItem.abstract = cddaParseItem.abstract
+      cddaItem.modOrder = finalCddaItem.modOrder.value.map { it.id }.toMutableSet()
+      cddaItem.cddaType = finalCddaItem.cddaType
+      cddaItem.jsonType = finalCddaItem.jsonType
+      cddaItem.cddaId = finalCddaItem.id
+      cddaItem.path = finalCddaItem.path.relativeTo(repoPath).toString()
+      cddaItem.abstract = finalCddaItem.abstract
       cddaItem.originalJson = originalJsonEntity
       cddaItem.json = jsonEntity
-      cddaItem.name = TranslationEntity.of(cddaParseItem.name)
-      if (cddaParseItem.description != null) {
-        cddaItem.description = TranslationEntity.of(cddaParseItem.description!!)
-      }
+      if (finalCddaItem.name != null)
+        cddaItem.name = TranslationEntity.of(finalCddaItem.name)
+      if (finalCddaItem.description != null)
+        cddaItem.description = TranslationEntity.of(finalCddaItem.description)
       return cddaItem
     }
   }

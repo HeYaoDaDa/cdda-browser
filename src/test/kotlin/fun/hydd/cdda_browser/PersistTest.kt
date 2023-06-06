@@ -43,7 +43,6 @@ class PersistTest {
       val cddaItem = CddaItem()
       cddaItem.jsonType = JsonType.MOD_INFO
       cddaItem.cddaType = CddaType.MOD_INFO
-      cddaMod.items.add(cddaItem)
       val toCompletableFuture = emf.withTransaction { _, _ ->
         emf.withTransaction { session, _ -> session.persist(cddaVersion) }
       }.toCompletableFuture()

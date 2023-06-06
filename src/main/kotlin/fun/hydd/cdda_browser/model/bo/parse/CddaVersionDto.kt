@@ -18,28 +18,20 @@ import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
-class CddaParseVersion {
-  var id: Long? = null
-
-  lateinit var releaseName: String
-
-  lateinit var tagName: String
-
-  lateinit var commitHash: String
-
-  lateinit var status: CddaVersionStatus
-
-  var experiment: Boolean = true
-
-  lateinit var tagDate: LocalDateTime
-
-  val mods: MutableCollection<CddaParseMod> = mutableListOf()
+data class CddaVersionDto(
+  val releaseName: String,
+  val tagName: String,
+  val commitHash: String,
+  val status: CddaVersionStatus,
+  val experiment: Boolean,
+  val tagDate: LocalDateTime,
+) {
 
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
 
-    suspend fun getPendUpdateVersions(vertx: Vertx, dbFactory: Stage.SessionFactory): List<CddaParseVersion> {
-      val needUpdateVersions = mutableListOf<CddaParseVersion>()
+    suspend fun getPendUpdateVersions(vertx: Vertx, dbFactory: Stage.SessionFactory): List<CddaVersionDto> {
+      val needUpdateVersions = mutableListOf<CddaVersionDto>()
       val repoLatestTag = getRepoLatestVersionTag(vertx.eventBus())
       if (repoLatestTag != null) {
         val savedLatestVersionDto = CddaVersionDao.getLatest(dbFactory)
@@ -67,8 +59,10 @@ class CddaParseVersion {
      * @return tag
      */
     private suspend fun getRepoLatestVersionTag(eventBus: EventBus): GitTagDto? {
-      val tagRef = GitUtil.getLatestRevObject(eventBus)
-      return if (tagRef != null) GitTagDto(tagRef) else null
+      //todo test use
+      return GitTagDto("0.G", LocalDateTime.now())
+//      val tagRef = GitUtil.getLatestRevObject(eventBus)
+//      return if (tagRef != null) GitTagDto(tagRef) else null
     }
 
     /**
@@ -77,7 +71,7 @@ class CddaParseVersion {
      * @param date
      * @return
      */
-    private suspend fun getNeedUpdateVersionList(vertx: Vertx, date: LocalDateTime): List<CddaParseVersion> =
+    private suspend fun getNeedUpdateVersionList(vertx: Vertx, date: LocalDateTime): List<CddaVersionDto> =
       coroutineScope {
         val localRefs = GitUtil.getTagList(vertx.eventBus())
         val result = ArrayList<GitTagDto>()
@@ -97,7 +91,7 @@ class CddaParseVersion {
      * @param tag GitTagDto
      * @return CddaVersion
      */
-    private suspend fun getCddaVersionByGitTagDto(vertx: Vertx, tag: GitTagDto): CddaParseVersion {
+    private suspend fun getCddaVersionByGitTagDto(vertx: Vertx, tag: GitTagDto): CddaVersionDto {
       val requestOptions: RequestOptions =
         RequestOptions().setHost("api.github.com").setURI("/repos/CleverRaven/Cataclysm-DDA/releases/tags/${tag.name}")
           .setMethod(HttpMethod.GET).setPort(443).putHeader("User-Agent", "item-browser").setSsl(true)
@@ -109,14 +103,9 @@ class CddaParseVersion {
         throw Exception("Tag ${tag.name} release response is null")
       }
       if (tag.name != releaseDto.tagName) throw Exception("Tag and release not match")
-      val result = CddaParseVersion()
-      result.releaseName = releaseDto.name
-      result.commitHash = releaseDto.commitHash
-      result.experiment = releaseDto.isExperiment
-      result.tagName = tag.name
-      result.tagDate = tag.date
-      result.status = CddaVersionStatus.STOP
-      return result
+      return CddaVersionDto(
+        releaseDto.name, tag.name, releaseDto.commitHash, CddaVersionStatus.STOP, releaseDto.isExperiment, tag.date
+      )
     }
   }
 }

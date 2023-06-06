@@ -1,11 +1,7 @@
 package `fun`.hydd.cdda_browser.model.entity
 
-import `fun`.hydd.cdda_browser.model.bo.parse.CddaParseMod
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import `fun`.hydd.cdda_browser.model.CddaModDto
 import org.hibernate.Hibernate
-import org.hibernate.reactive.stage.Stage
 import javax.persistence.*
 
 @Entity
@@ -38,9 +34,6 @@ open class CddaMod {
   @Column(name = "core", nullable = false)
   open var core: Boolean? = null
 
-  @OneToMany(mappedBy = "mod", cascade = [CascadeType.ALL], orphanRemoval = true)
-  open var items: MutableSet<CddaItem> = mutableSetOf()
-
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "cdda_mod_depModIds", joinColumns = [JoinColumn(name = "owner_id")])
   @Column(name = "dep_mod_id")
@@ -62,24 +55,15 @@ open class CddaMod {
   override fun hashCode(): Int = javaClass.hashCode()
 
   companion object {
-    suspend fun of(factory: Stage.SessionFactory, version: CddaVersion, cddaParseMod: CddaParseMod): CddaMod {
+    fun of(cddaModDto: CddaModDto): CddaMod {
       val cddaMod = CddaMod()
-      cddaMod.modId = cddaParseMod.id
-      cddaMod.name = cddaParseMod.name
-      cddaMod.description = cddaParseMod.description
-      cddaMod.obsolete = cddaParseMod.obsolete
-      cddaMod.core = cddaParseMod.core
-      cddaMod.depModIds.addAll(cddaParseMod.depModIds)
-      cddaMod.allDepModIds.addAll(cddaParseMod.allDepModIds)
-      val cddaItems = coroutineScope {
-        cddaParseMod.cddaItems.map {
-          async {
-            CddaItem.of(factory, cddaMod, it)
-          }
-        }.awaitAll()
-      }
-      cddaMod.items = cddaItems.toMutableSet()
-      cddaMod.version = version
+      cddaMod.modId = cddaModDto.id
+      cddaMod.name = cddaModDto.name
+      cddaMod.description = cddaModDto.description
+      cddaMod.obsolete = cddaModDto.obsolete
+      cddaMod.core = cddaModDto.core
+      cddaMod.depModIds.addAll(cddaModDto.dependencies.map { it.id })
+      cddaMod.allDepModIds.addAll(cddaModDto.allDependencies.map { it.id })
       return cddaMod
     }
   }

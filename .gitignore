@@ -186,3 +186,4 @@ nbdist/
 
 ### log ###
 /log/
+.log/

@@ -5,6 +5,7 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.await
 import java.io.File
+import kotlin.collections.set
 
 object JsonUtil {
   /**

@@ -10,7 +10,7 @@ data class CddaModData(
     fun of(cddaMod: CddaMod): CddaModData {
       return CddaModData(
         cddaMod.modId!!,
-        cddaMod.items.map(CddaItemData::of)
+        emptyList()//todo
       )
     }
   }
