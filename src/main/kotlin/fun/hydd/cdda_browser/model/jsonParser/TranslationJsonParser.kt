@@ -8,7 +8,7 @@ class TranslationJsonParser() : JsonParser<Translation>() {
     return when (jsonValue) {
       is String -> Translation(jsonValue, para.ifBlank { null })
       is JsonObject -> Translation(jsonValue, para.ifBlank { null })
-      else -> throw IllegalArgumentException()
+      else -> throw IllegalArgumentException("value is $jsonValue, type is ${jsonValue::class}")
     }
   }
 }

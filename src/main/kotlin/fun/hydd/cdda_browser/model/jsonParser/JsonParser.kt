@@ -22,6 +22,7 @@ abstract class JsonParser<T : Any>() {
       Pair(String::class, StringJsonParser()),
       Pair(Boolean::class, BooleanJsonParser()),
       Pair(Double::class, DoubleJsonParser()),
+      Pair(Int::class, IntJsonParser()),
       Pair(Translation::class, TranslationJsonParser()),
       Pair(CddaItemRef::class, CddaItemRefJsonParser()),
       Pair(StrNumPair::class, StrNumPair.JsonParser()),

@@ -8,7 +8,7 @@ class CddaItemRefJsonParser() : JsonParser<CddaItemRef>() {
     if (para.isBlank()) throw Exception("CddaItemRef miss para")
     return when (jsonValue) {
       is String -> CddaItemRef(CddaType.valueOf(para), jsonValue)
-      else -> throw IllegalArgumentException()
+      else -> throw IllegalArgumentException("value is $jsonValue, type is ${jsonValue::class}")
     }
   }
 }

@@ -4,6 +4,7 @@ enum class JsonType(private val str: String) {
   MOD_INFO("mod_info"),
   JSON_FLAG("json_flag"),
   BODY_PART("body_part"),
+  SUB_BODY_PART("sub_body_part"),
   MATERIAL("material");
 
   fun isEquals(other: Any?): Boolean {

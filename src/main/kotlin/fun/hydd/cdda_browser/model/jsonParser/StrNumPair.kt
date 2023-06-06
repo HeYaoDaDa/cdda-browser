@@ -26,7 +26,7 @@ data class StrNumPair(
         }
         if (name != null && value != null) return StrNumPair(name!!, value!!) else throw Exception()
       } else {
-        throw IllegalArgumentException()
+        throw IllegalArgumentException("value is $jsonValue, type is ${jsonValue::class}")
       }
     }
   }
