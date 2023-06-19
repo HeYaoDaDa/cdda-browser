@@ -1,14 +1,13 @@
 package `fun`.hydd.cdda_browser.model
 
-import `fun`.hydd.cdda_browser.model.base.CddaItemRef
-import `fun`.hydd.cdda_browser.model.base.parent.CddaItemData
+import `fun`.hydd.cdda_browser.model.base.parent.CddaObject
+import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.CddaItemRef
 
 data class FinalResult(
-  val cddaItemData: CddaItemData?,
-  val dependencies: MutableMap<CddaItemRef, ModOrder>?,
+  val cddaObject: CddaObject?,
   val deferRef: CddaItemRef?,
 ) {
   fun isPass(): Boolean {
-    return cddaItemData != null
+    return cddaObject != null
   }
 }

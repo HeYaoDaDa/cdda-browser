@@ -35,9 +35,6 @@ open class CddaVersion {
   @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var mods: MutableSet<CddaMod> = mutableSetOf()
 
-  @OneToMany(fetch = FetchType.LAZY, mappedBy = "cddaVersion", cascade = [CascadeType.ALL], orphanRemoval = true)
-  open var cddaItems: MutableSet<CddaItem> = mutableSetOf()
-
   @OneToMany(fetch = FetchType.EAGER, mappedBy = "version", cascade = [CascadeType.ALL], orphanRemoval = true)
   open var pos: MutableSet<GetTextPo> = mutableSetOf()
 

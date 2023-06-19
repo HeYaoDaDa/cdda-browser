@@ -5,18 +5,15 @@ import `fun`.hydd.cdda_browser.model.base.GitHubReleaseDto
 import `fun`.hydd.cdda_browser.model.base.GitTagDto
 import `fun`.hydd.cdda_browser.model.dao.CddaVersionDao
 import `fun`.hydd.cdda_browser.util.GitUtil
-import `fun`.hydd.cdda_browser.util.HttpUtil
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.EventBus
-import io.vertx.core.http.HttpMethod
-import io.vertx.core.http.RequestOptions
-import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.hibernate.reactive.stage.Stage
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
+import java.util.*
 
 data class CddaVersionDto(
   val releaseName: String,
@@ -92,16 +89,18 @@ data class CddaVersionDto(
      * @return CddaVersion
      */
     private suspend fun getCddaVersionByGitTagDto(vertx: Vertx, tag: GitTagDto): CddaVersionDto {
-      val requestOptions: RequestOptions =
-        RequestOptions().setHost("api.github.com").setURI("/repos/CleverRaven/Cataclysm-DDA/releases/tags/${tag.name}")
-          .setMethod(HttpMethod.GET).setPort(443).putHeader("User-Agent", "item-browser").setSsl(true)
-      val buffer = HttpUtil.request(vertx, requestOptions)
-      val releaseDto = if (buffer != null) {
-        val jsonObject: JsonObject = buffer.toJsonObject()
-        jsonObject.mapTo(GitHubReleaseDto::class.java)
-      } else {
-        throw Exception("Tag ${tag.name} release response is null")
-      }
+//      todo use in test
+//      val requestOptions: RequestOptions =
+//        RequestOptions().setHost("api.github.com").setURI("/repos/CleverRaven/Cataclysm-DDA/releases/tags/${tag.name}")
+//          .setMethod(HttpMethod.GET).setPort(443).putHeader("User-Agent", "item-browser").setSsl(true)
+//      val buffer = HttpUtil.request(vertx, requestOptions)
+//      val releaseDto = if (buffer != null) {
+//        val jsonObject: JsonObject = buffer.toJsonObject()
+//        jsonObject.mapTo(GitHubReleaseDto::class.java)
+//      } else {
+//        throw Exception("Tag ${tag.name} release response is null")
+//      }
+      val releaseDto = GitHubReleaseDto("Gaiman", "0.G", "d6ec466140839dd70c1a43671eb4a08b007695c2", false, Date())
       if (tag.name != releaseDto.tagName) throw Exception("Tag and release not match")
       return CddaVersionDto(
         releaseDto.name, tag.name, releaseDto.commitHash, CddaVersionStatus.STOP, releaseDto.isExperiment, tag.date

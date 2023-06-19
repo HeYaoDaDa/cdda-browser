@@ -20,11 +20,6 @@ open class CddaItem {
   @Column(name = "id", nullable = false)
   open var id: Long? = null
 
-  @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "cdda_item_modOrder", joinColumns = [JoinColumn(name = "owner_id")])
-  @Column(name = "mod_order")
-  open var modOrder: MutableSet<String> = mutableSetOf()
-
   @Enumerated(EnumType.STRING)
   @Column(name = "json_type", nullable = false)
   open var jsonType: JsonType? = null
@@ -72,9 +67,9 @@ open class CddaItem {
   @JoinColumn(name = "json_id", nullable = false)
   open var json: JsonEntity? = null
 
-  @ManyToOne(optional = false)
-  @JoinColumn(name = "cdda_version_id", nullable = false)
-  open var cddaVersion: CddaVersion? = null
+  @ManyToOne
+  @JoinColumn(name = "cdda_mod_id")
+  open var cddaMod: CddaMod? = null
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -90,10 +85,11 @@ open class CddaItem {
     suspend fun ofList(
       factory: Stage.SessionFactory,
       repoPath: Path,
-      finalCddaItems: List<FinalCddaItem>
+      finalCddaItems: List<FinalCddaItem>,
+      mods: List<CddaMod>
     ): List<CddaItem> {
       val currentJsonEntityMap = mutableMapOf<String, JsonEntity>()
-      return finalCddaItems.map { of(factory, repoPath, currentJsonEntityMap, it) }
+      return finalCddaItems.map { of(factory, repoPath, currentJsonEntityMap, it, mods) }
     }
 
     suspend fun of(
@@ -101,6 +97,7 @@ open class CddaItem {
       repoPath: Path,
       currentJsonEntityMap: MutableMap<String, JsonEntity>,
       finalCddaItem: FinalCddaItem,
+      mods: List<CddaMod>
     ): CddaItem {
       val originalJsonHash = finalCddaItem.originalJson.getHashString()
       var originalJsonEntity =
@@ -112,7 +109,7 @@ open class CddaItem {
         currentJsonEntityMap[originalJsonHash] = originalJsonEntity
       }
 
-      val json = JsonObject.mapFrom(finalCddaItem.cddaItemData)
+      val json = JsonObject.mapFrom(finalCddaItem.cddaObject)
       val jsonHash = json.getHashString()
       var jsonEntity = JsonEntityDao.findByHashCode(factory, jsonHash) ?: currentJsonEntityMap[jsonHash]
       if (jsonEntity == null) {
@@ -123,7 +120,8 @@ open class CddaItem {
       }
 
       val cddaItem = CddaItem()
-      cddaItem.modOrder = finalCddaItem.modOrder.value.map { it.id }.toMutableSet()
+      cddaItem.cddaMod = mods.find { it.modId == finalCddaItem.getMod().id }
+      cddaItem.cddaMod!!.cddaItems.add(cddaItem)
       cddaItem.cddaType = finalCddaItem.cddaType
       cddaItem.jsonType = finalCddaItem.jsonType
       cddaItem.cddaId = finalCddaItem.id

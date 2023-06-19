@@ -44,6 +44,9 @@ open class CddaMod {
   @Column(name = "all_dep_mod_id")
   open var allDepModIds: MutableSet<String> = mutableSetOf()
 
+  @OneToMany(mappedBy = "cddaMod", cascade = [CascadeType.ALL], orphanRemoval = true)
+  open var cddaItems: MutableSet<CddaItem> = mutableSetOf()
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false

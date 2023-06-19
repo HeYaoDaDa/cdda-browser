@@ -1,6 +1,6 @@
 package `fun`.hydd.cdda_browser.model.entity
 
-import `fun`.hydd.cdda_browser.model.base.Translation
+import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.Translation
 import javax.persistence.Embeddable
 
 @Embeddable
