@@ -16,7 +16,7 @@ abstract class CddaObject {
 
   @MapInfo(ignore = true)
   var itemDescription: Translation? = null
-  open fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef): CddaItemRef? {
-    return null
+  open fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef) {
+    return
   }
 }

@@ -51,12 +51,11 @@ class Material : CddaObject() {
   @MapInfo(param = "ITEM")
   var repairedWith: CddaItemRef? = null
 
-  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef): CddaItemRef? {
+  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef) {
     if (this.burnData.isEmpty()) {
       this.burnData.add(MatBurnData(burn = 1.0))
     }
     this.itemName = this.name
-    return null
   }
 
   enum class BreathabilityRate {

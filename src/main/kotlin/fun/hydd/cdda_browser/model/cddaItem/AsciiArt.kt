@@ -15,13 +15,12 @@ class AsciiArt : CddaObject() {
   @JsonIgnore
   @MapInfo(key = "picture")
   var pictureJson: MutableList<String> = mutableListOf()
-  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef): CddaItemRef? {
+  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef) {
     val stringBuilder = StringBuilder()
     this.pictureJson.forEachIndexed { index, s ->
       stringBuilder.append(s)
       if (index < this.pictureJson.size - 1) stringBuilder.append("\n")
     }
     this.picture = stringBuilder.toString()
-    return null
   }
 }

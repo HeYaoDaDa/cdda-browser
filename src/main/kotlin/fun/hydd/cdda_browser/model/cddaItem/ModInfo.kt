@@ -23,11 +23,10 @@ class ModInfo : CddaObject() {
   @MapInfo(ignore = true)
   var category: Translation = Translation("NO CATEGORY")
 
-  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef): CddaItemRef? {
+  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef) {
     this.category = getModCategory(this.jsonCategory)
     this.itemName = this.name
     this.itemDescription = this.description
-    return null
   }
 
   private fun getModCategory(value: String): Translation {

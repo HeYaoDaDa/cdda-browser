@@ -6,7 +6,7 @@ import `fun`.hydd.cdda_browser.constant.JsonType
 import `fun`.hydd.cdda_browser.model.CddaCommonItem
 import `fun`.hydd.cdda_browser.model.CddaModDto
 import `fun`.hydd.cdda_browser.model.FinalCddaItem
-import `fun`.hydd.cdda_browser.model.FinalResult
+import `fun`.hydd.cdda_browser.model.base.NeedDeferException
 import `fun`.hydd.cdda_browser.model.base.ProcessContext
 import `fun`.hydd.cdda_browser.model.base.parent.CddaObject
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
@@ -60,52 +60,49 @@ object CddaItemParseManager {
     log.info("\t\tCddaItem ${itemRef.type}/${itemRef.id} start")
     ProcessContext.commonItem = commonItem
     ProcessContext.itemId = id
-    val parseResult = parse(commonItem, itemRef)
-    if (!parseResult.isPass()) {
-      ProcessContext.deferManager.add(parseResult.deferRef!!, commonItem, id)
-      log.info("\t\tparse fail need:${parseResult.deferRef}")
-      return
-    }
-    val finalItem = FinalCddaItem(
-      commonItem,
-      parseResult.cddaObject!!,
-      id,
-      cddaType,
-      commonItem.jsonType,
-      commonItem.path,
-      commonItem.abstract,
-      parseResult.cddaObject.itemName,
-      parseResult.cddaObject.itemDescription,
-      commonItem.json
-    )
-    ProcessContext.finalManager.add(finalItem)
-    ProcessContext.commonItem = null
-    ProcessContext.itemId = null
-    log.info("\t\tCddaItem ${itemRef.type}/${itemRef.id} end")
-    ProcessContext.deferManager.pop(itemRef).forEach { deferCddaItem ->
-      log.info("\t\tdeferCddaItem ${deferCddaItem.second.cddaType}/${deferCddaItem.first}")
-      processCddaItem(deferCddaItem.second, deferCddaItem.first)
+    try {
+      val cddaObject = parse(commonItem, itemRef)
+      val finalItem = FinalCddaItem(
+        commonItem,
+        cddaObject,
+        id,
+        cddaType,
+        commonItem.jsonType,
+        commonItem.path,
+        commonItem.abstract,
+        cddaObject.itemName,
+        cddaObject.itemDescription,
+        commonItem.json
+      )
+      ProcessContext.finalManager.add(finalItem)
+      ProcessContext.commonItem = null
+      ProcessContext.itemId = null
+      log.info("\t\tCddaItem ${itemRef.type}/${itemRef.id} end")
+      ProcessContext.deferManager.pop(itemRef).forEach { deferCddaItem ->
+        log.info("\t\tdeferCddaItem ${deferCddaItem.second.cddaType}/${deferCddaItem.first}")
+        processCddaItem(deferCddaItem.second, deferCddaItem.first)
+      }
+    } catch (e: NeedDeferException) {
+      ProcessContext.deferManager.add(e.defer, commonItem, id)
+      log.info("\t\tparse fail need:${e.defer}")
     }
   }
 
   private fun parse(
     commonItem: CddaCommonItem,
     itemRef: CddaItemRef
-  ): FinalResult {
+  ): CddaObject {
     var parent: CddaObject? = null
     if (commonItem.copyFrom != null) {
       val parentItemRef = CddaItemRef(commonItem.cddaType, commonItem.copyFrom)
       val parseFinalItem =
-        ProcessContext.finalManager.find(commonItem.mod, parentItemRef).firstOrNull() ?: return FinalResult(
-          null,
-          parentItemRef
-        )
+        ProcessContext.finalManager.find(commonItem.mod, parentItemRef).firstOrNull()
+          ?: throw NeedDeferException(parentItemRef)
       parent = parseFinalItem.cddaObject
     }
     val cddaObject = mapCddaCommonItem(commonItem, parent)
-    val dependRef = cddaObject.finalize(commonItem, itemRef)
-    return if (dependRef != null) FinalResult(null, dependRef)
-    else FinalResult(cddaObject, null)
+    cddaObject.finalize(commonItem, itemRef)
+    return cddaObject
   }
 
   private fun parseId(cddaCommonItem: CddaCommonItem, cddaType: CddaType): List<Pair<String, CddaCommonItem>> {

@@ -24,8 +24,7 @@ class BodyPart : CddaObject() {
   @MapInfo(param = "JSON_FLAG")
   var flags: MutableList<CddaItemRef> = mutableListOf()
 
-  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef): CddaItemRef? {
+  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef) {
     this.itemName = this.name
-    return null
   }
 }

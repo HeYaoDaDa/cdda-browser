@@ -21,8 +21,7 @@ class JsonFlag : CddaObject() {
   @MapInfo(param = "JSON_FLAG")
   var requiresFlag: CddaItemRef? = null
 
-  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef): CddaItemRef? {
+  override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef) {
     this.itemName = this.name
-    return null
   }
 }
