@@ -6,12 +6,37 @@ import `fun`.hydd.cdda_browser.model.base.ProcessContext
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.model.cddaItem.BodyPart
 import `fun`.hydd.cdda_browser.model.cddaItem.Material
+import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit.Weight
 import `fun`.hydd.cdda_browser.util.extension.getOrCreateJsonArray
 import io.vertx.core.json.JsonObject
 
 data class ArmorData(
-  var armor: MutableList<ArmorPortionData> = mutableListOf()
+  var armor: MutableList<ArmorPortionData> = mutableListOf(),
+  @MapInfo(param = "BODY_PART")
+  var covers: MutableSet<CddaItemRef>? = null,
+  var materialThickness: Double? = null,
+  var environmentalProtection: Int? = null,
+  var environmentalProtectionWithFilter: Int? = null,
+  var sided: Boolean = false,
+  var warmth: Int = 0,
+  @MapInfo(param = "ITEM")
+  var nonFunctional: CddaItemRef? = null,
+  var weightCapacityModifier: Double = 1.0,
+  var weightCapacityBonus: Weight = Weight(),
+  var powerArmor: Boolean = false,
+  var validMods: MutableSet<String> = mutableSetOf()
 ) : CddaSubObject() {
+
+  override fun finalize(jsonValue: Any, param: String) {
+    this.armor.forEach {
+      if (this.materialThickness != null) it.materialThickness = this.materialThickness!!
+      if (this.environmentalProtection != null) it.environmentalProtection = this.environmentalProtection!!
+      if (this.environmentalProtectionWithFilter != null) it.environmentalProtectionWithFilter =
+        this.environmentalProtectionWithFilter!!
+      if (this.covers != null)
+        it.covers = this.covers!!
+    }
+  }
 
   enum class EncumbranceModifier {
     IMBALANCED,
