@@ -17,7 +17,6 @@ import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.extension.getOrCreateJsonArray
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import kotlin.math.cbrt
 import kotlin.math.max
 
 class Item : CddaObject() {
@@ -70,6 +69,10 @@ class Item : CddaObject() {
   @IgnoreMap
   @MapInfo(spFun = "toolDataFun")
   var toolData: ToolData? = null
+
+  @IgnoreMap
+  @MapInfo(spFun = "toolModDataFun")
+  var toolModData: ToolModData? = null
 
   @IgnoreMap
   @MapInfo(spFun = "conditionalNamesFun")
@@ -213,6 +216,13 @@ class Item : CddaObject() {
     }
   }
 
+  fun toolModDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.TOOLMOD) {
+      this.toolModData = ToolModData()
+      this.toolModData!!.parse(ProcessContext.commonItem!!.json, "")
+    }
+  }
+
   fun conditionalNamesFun() {
     ProcessContext.commonItem!!.json.getOrCreateJsonArray("conditionalNamesFun")?.forEach { jsonObject ->
       if (jsonObject is JsonObject) {
@@ -344,71 +354,6 @@ class Item : CddaObject() {
     var weight: Int = 0,
     var append: Boolean = false,
   ) : CddaSubObject()
-
-  data class PocketData(
-    var pocketType: String = "CONTAINER",
-    @IgnoreMap
-    @MapInfo(spFun = "ammoRestrictionFun")
-    var ammoRestriction: MutableMap<String, Int> = mutableMapOf(),
-    var description: Translation? = null,
-    var name: Translation? = null,
-    var minItemVolume: Volume = Volume(0),
-    var maxItemVolume: Volume? = null,
-    var maxContainsVolume: Volume = Volume(200000000),
-    var maxContainsWeight: Weight = Weight(2000000 * 1000),
-    @MapInfo(spFun = "maxItemLengthFun")
-    var maxItemLength: Length = Length(-1),
-    var extraEncumbrance: Int = 0,
-    var volumeEncumberModifier: Double = 1.0,
-    var ripoff: Int = 0,
-    var spoilMultiplier: Double = 1.0,
-    var weightMultiplier: Double = 1.0,
-    var volumeMultiplier: Double = 1.0,
-    var magazineWell: Volume = Volume(0),
-    var moves: Int = 100,
-    var fireProtection: Boolean = false,
-    var watertight: Boolean = false,
-    var airtight: Boolean = false,
-    var openContainer: Boolean = false,
-    var transparent: Boolean = false,
-    var rigid: Boolean = false,
-    var forbidden: Boolean = false,
-    var holster: Boolean = false,
-    var ablative: Boolean = false,
-    var inheritsFlags: Boolean = false,
-    var sealedData: SealableData = SealableData(),
-    @MapInfo(param = "JSON_FLAG")
-    var flagRestriction: MutableList<CddaItemRef> = mutableListOf(),
-    @MapInfo(param = "ITEM")
-    var itemRestriction: MutableList<CddaItemRef> = mutableListOf(),
-    @MapInfo(param = "MATERIAL")
-    var materialRestriction: MutableList<CddaItemRef> = mutableListOf(),
-    @MapInfo(param = "ITEM")
-    var allowedSpeedloaders: MutableList<CddaItemRef> = mutableListOf(),
-    @MapInfo(param = "ITEM")
-    var defaultMagazine: CddaItemRef? = null,
-  ) : CddaSubObject() {
-
-    fun maxItemLengthFun() {
-      if (maxItemLength.value == -1L) {
-        maxItemLength.value = ((cbrt(this.maxContainsVolume.value.toDouble())).toInt() * 1.4142135623730951).toLong()
-      }
-    }
-
-    fun ammoRestrictionFun(jsonObject: JsonObject) {
-      jsonObject.getJsonObject("ammo_restriction")?.forEach {
-        this.ammoRestriction[it.key] = it.value as Int
-      }
-    }
-
-    override fun finalize(jsonValue: Any, param: String) {
-      if (this.itemRestriction.isNotEmpty())
-        this.defaultMagazine = this.itemRestriction.first()
-      if (this.ablative) this.holster = true
-    }
-
-    data class SealableData(var spoilMultiplier: Double = 1.0) : CddaSubObject()
-  }
 
   enum class ToHitGrip(val value: Int) {
     BAD(0), NONE(1), SOLID(2), WEAPON(3)
