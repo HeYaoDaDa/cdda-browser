@@ -19,6 +19,8 @@ class BodyPart : CddaObject() {
   var hitSize: Double = 0.0
   var hitDifficulty: Double = 0.0
   var baseHp: Double = 60.0
+  @MapInfo(param = "SUB_BODY_PART")
+  var subParts:MutableList<CddaItemRef> = mutableListOf()
   // todo more field finalize()
 
   @MapInfo(param = "JSON_FLAG")
