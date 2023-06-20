@@ -66,6 +66,9 @@ class Item : CddaObject() {
   @MapInfo(spFun = "petArmorDataFun")
   var petArmorData: PetArmorData? = null
 
+  @MapInfo(ignore = true, spFun = "toolDataFun")
+  var toolData: ToolData? = null
+
   @MapInfo(ignore = true, spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
 
@@ -196,6 +199,13 @@ class Item : CddaObject() {
     if (ProcessContext.commonItem!!.jsonType == JsonType.PET_ARMOR) {
       this.petArmorData = PetArmorData()
       this.petArmorData!!.parse(ProcessContext.commonItem!!.json, "")
+    }
+  }
+
+  fun toolDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.TOOL) {
+      this.toolData = ToolData()
+      this.toolData!!.parse(ProcessContext.commonItem!!.json, "")
     }
   }
 
