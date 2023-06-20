@@ -2,7 +2,9 @@ package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject
 
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.constant.CddaType
+import `fun`.hydd.cdda_browser.model.base.ProcessContext
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
+import `fun`.hydd.cdda_browser.model.cddaItem.BodyPart
 import `fun`.hydd.cdda_browser.model.cddaItem.Material
 import `fun`.hydd.cdda_browser.util.extension.getOrCreateJsonArray
 import io.vertx.core.json.JsonObject
@@ -54,6 +56,15 @@ data class ArmorData(
     var material: MutableList<PartMaterial> = mutableListOf(),
     var layers: MutableList<LayerLevel> = mutableListOf()
   ) : CddaSubObject() {
+
+    override fun finalize(jsonValue: Any, param: String) {
+      if (this.covers.isEmpty() && this.specificallyCovers.isNotEmpty()) {
+        this.covers.forEach {
+          this.specificallyCovers.addAll((ProcessContext.finalManager.find(it).cddaObject as BodyPart).subParts)
+        }
+      }
+    }
+
     fun coverMeleeFun(jsonValue: Any) {
       if (this.coverMelee == null) this.coverMelee = this.coverage
     }
@@ -99,5 +110,5 @@ data class ArmorData(
     var cover: Int = 100,
     var thickness: Double = 0.0,
     var ignoreSheetThickness: Boolean = false,
-  ) : CddaSubObject() {}
+  ) : CddaSubObject()
 }
