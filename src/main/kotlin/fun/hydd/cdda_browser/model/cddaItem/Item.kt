@@ -120,8 +120,6 @@ class Item : CddaObject() {
   @IgnoreMap
   var defaultMagazine: MutableMap<String, CddaItemRef> = mutableMapOf()
 
-  @IgnoreMap
-  @MapInfo(spFun = "phaseFun")
   var phase: PhaseType = PhaseType.SOLID
 
   @IgnoreMap
@@ -259,12 +257,6 @@ class Item : CddaObject() {
     }
     this.magazines.forEach {
       this.defaultMagazine[it.key] = it.value.first()
-    }
-  }
-
-  fun phaseFun() {
-    if (ProcessContext.commonItem!!.json.containsKey("phase")) {
-      this.phase = PhaseType.valueOf(ProcessContext.commonItem!!.json.getString("phase").uppercase())
     }
   }
 
