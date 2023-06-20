@@ -1,11 +1,11 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit
 
-import `fun`.hydd.cdda_browser.annotation.MapInfo
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
 
-data class Power(@MapInfo(ignore = true) var value: Long = 0) : CddaSubObject() {
+data class Power(@IgnoreMap var value: Long = 0) : CddaSubObject() {
   enum class Unit(val unit: Set<String>, val num: Long = 1) {
     MW(setOf("mw")), W(setOf("w"), 1000), KW(setOf("kw"), 1000 * 1000)
   }

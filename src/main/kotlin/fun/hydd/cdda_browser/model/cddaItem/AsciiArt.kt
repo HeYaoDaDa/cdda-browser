@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.model.CddaCommonItem
 import `fun`.hydd.cdda_browser.model.base.parent.CddaObject
@@ -9,7 +10,7 @@ import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.CddaItemRef
 class AsciiArt : CddaObject() {
   lateinit var id: String
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   lateinit var picture: String
 
   @JsonIgnore

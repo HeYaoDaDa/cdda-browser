@@ -1,11 +1,11 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit
 
-import `fun`.hydd.cdda_browser.annotation.MapInfo
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
 
-data class Money(@MapInfo(ignore = true) var value: Long = 0) : CddaSubObject() {
+data class Money(@IgnoreMap var value: Long = 0) : CddaSubObject() {
   enum class Unit(val unit: Set<String>, val num: Long = 1) {
     CENT(setOf("cent")), USD(setOf("usd"), 100), KUSD(setOf("kusd"), 100 * 1000)
   }

@@ -1,5 +1,6 @@
 package `fun`.hydd.cdda_browser.server
 
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
@@ -207,7 +208,8 @@ object CddaItemParseManager {
     cddaObjectClass.memberProperties.filterIsInstance<KMutableProperty<*>>().forEach { prop ->
       log.info("\t\t\tprocess prop: ${prop.name}")
       val mapInfo = prop.findAnnotations(MapInfo::class).firstOrNull() ?: MapInfo()
-      if (!mapInfo.ignore) {
+      val ignore = prop.findAnnotations(IgnoreMap::class).isNotEmpty()
+      if (!ignore) {
         val jsonFieldName = mapInfo.key.ifBlank { JsonUtil.javaField2JsonField(prop.name) }
         if (item.json.containsKey(jsonFieldName)) {
           val subJsonValue = item.json.getValue(jsonFieldName)

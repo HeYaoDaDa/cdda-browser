@@ -1,15 +1,15 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject
 
-import `fun`.hydd.cdda_browser.annotation.MapInfo
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.model.entity.TranslationEntity
 import io.vertx.core.json.JsonObject
 import java.lang.instrument.IllegalClassFormatException
 
 data class Translation(
-  @MapInfo(ignore = true) var value: String = "",
+  @IgnoreMap var value: String = "",
 
-  @MapInfo(ignore = true) var ctxt: String? = null
+  @IgnoreMap var ctxt: String? = null
 ) : CddaSubObject() {
 
   override fun finalize(jsonValue: Any, param: String) {

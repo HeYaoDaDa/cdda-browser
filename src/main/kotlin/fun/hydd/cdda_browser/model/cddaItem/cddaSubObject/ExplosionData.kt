@@ -1,5 +1,6 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject
 
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import io.vertx.core.json.JsonObject
@@ -9,7 +10,7 @@ data class ExplosionData(
   val distanceFactor: Double = 0.75,
   val maxNoise: Int = 90000000,
   var fire: Boolean = false,
-  @MapInfo(ignore = true, spFun = "shrapnelFun") var shrapnel: ShrapnelData? = null
+  @IgnoreMap @MapInfo(spFun = "shrapnelFun") var shrapnel: ShrapnelData? = null
 ) : CddaSubObject() {
   fun shrapnelFun(jsonValue: Any) {
     if (jsonValue is JsonObject && jsonValue.containsKey("shrapnel")) {

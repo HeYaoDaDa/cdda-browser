@@ -1,5 +1,6 @@
 package `fun`.hydd.cdda_browser.model.base.parent
 
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import io.vertx.core.json.JsonObject
@@ -33,7 +34,8 @@ abstract class CddaSubObject {
   fun autoMap(jsonValue: Any) {
     this::class.memberProperties.filterIsInstance<KMutableProperty<*>>().forEach { prop ->
       val mapInfo = prop.findAnnotations(MapInfo::class).firstOrNull() ?: MapInfo()
-      if (!mapInfo.ignore && jsonValue is JsonObject) {
+      val ignore = prop.findAnnotations(IgnoreMap::class).isNotEmpty()
+      if (!ignore && jsonValue is JsonObject) {
         val jsonFieldName = mapInfo.key.ifBlank { JsonUtil.javaField2JsonField(prop.name) }
         if (jsonValue.containsKey(jsonFieldName)) {
           val subJsonValue = jsonValue.getValue(jsonFieldName)

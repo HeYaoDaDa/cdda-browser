@@ -1,5 +1,6 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.util.JsonUtil
@@ -79,7 +80,8 @@ data class DamageInstance(
   }
 
   data class DamageUnit(
-    @MapInfo(ignore = true, spFun = "mapDamageType")
+    @IgnoreMap
+    @MapInfo(spFun = "mapDamageType")
     var damageType: DamageType = DamageType.NULL,
     var amount: Double = 0.0,
     var armorPenetration: Double = 0.0,

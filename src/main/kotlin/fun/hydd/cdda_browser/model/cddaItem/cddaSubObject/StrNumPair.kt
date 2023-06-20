@@ -1,12 +1,12 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject
 
-import `fun`.hydd.cdda_browser.annotation.MapInfo
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import io.vertx.core.json.JsonArray
 
 data class StrNumPair(
-  @MapInfo(ignore = true) var name: String = "",
-  @MapInfo(ignore = true) var value: Double = 0.0
+  @IgnoreMap var name: String = "",
+  @IgnoreMap var value: Double = 0.0
 ) : CddaSubObject() {
   override fun finalize(jsonValue: Any, param: String) {
     if (jsonValue is JsonArray) {

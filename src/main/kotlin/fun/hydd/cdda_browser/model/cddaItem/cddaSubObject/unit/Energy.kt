@@ -1,11 +1,11 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit
 
-import `fun`.hydd.cdda_browser.annotation.MapInfo
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
 
-data class Energy(@MapInfo(ignore = true) var value: Long = 0) : CddaSubObject() {
+data class Energy(@IgnoreMap var value: Long = 0) : CddaSubObject() {
   enum class Unit(val unit: Set<String>, val num: Long = 1) {
     MJ(setOf("mj")), J(setOf("j"), 1000), KJ(setOf("kj"), 1000 * 1000)
   }

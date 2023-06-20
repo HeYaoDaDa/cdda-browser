@@ -1,11 +1,11 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit
 
-import `fun`.hydd.cdda_browser.annotation.MapInfo
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
 
-data class Length(@MapInfo(ignore = true) var value: Long = 0) : CddaSubObject() {
+data class Length(@IgnoreMap var value: Long = 0) : CddaSubObject() {
 
   enum class Unit(val unit: Set<String>, val num: Long = 1) {
     MM(setOf("mm")), CM(setOf("cm"), 10), M(setOf("m", "meter"), 10 * 100), KM(setOf("km"), 10 * 100 * 1000)

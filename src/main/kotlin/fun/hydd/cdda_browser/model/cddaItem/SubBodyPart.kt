@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.model.base.parent.CddaObject
@@ -16,7 +17,7 @@ class SubBodyPart : CddaObject() {
   var secondary: Boolean = false
   var maxCoverage: Int = 0
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var side: Side = Side.BOTH
 
   var nameMultiple: Translation? = null

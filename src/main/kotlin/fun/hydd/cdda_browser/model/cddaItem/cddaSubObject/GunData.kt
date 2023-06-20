@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.model.cddaItem.DamageInstance
@@ -35,7 +36,7 @@ data class GunData(
   var minCycleRecoil: Int = 0,
   var ammoEffects: MutableSet<String> = mutableSetOf(),
   var ammoToFire: Int = 1,
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var validModLocations: MutableMap<Translation, Int> = mutableMapOf(),
   @JsonIgnore
   @MapInfo(key = "valid_mod_locations", spFun = "validModLocationsJsonFun")
@@ -50,10 +51,10 @@ data class GunData(
   }
 
   data class GunModeData(
-    @MapInfo(ignore = true) var id: String = "",
-    @MapInfo(ignore = true) var name: Translation = Translation(),
-    @MapInfo(ignore = true) var num: Int = 1,
-    @MapInfo(ignore = true) var flags: MutableList<String> = mutableListOf()
+    @IgnoreMap var id: String = "",
+    @IgnoreMap var name: Translation = Translation(),
+    @IgnoreMap var num: Int = 1,
+    @IgnoreMap var flags: MutableList<String> = mutableListOf()
   ) : CddaSubObject() {
     override fun finalize(jsonValue: Any, param: String) {
       if (jsonValue is JsonArray) {

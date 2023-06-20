@@ -1,6 +1,7 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
@@ -66,10 +67,12 @@ class Item : CddaObject() {
   @MapInfo(spFun = "petArmorDataFun")
   var petArmorData: PetArmorData? = null
 
-  @MapInfo(ignore = true, spFun = "toolDataFun")
+  @IgnoreMap
+  @MapInfo(spFun = "toolDataFun")
   var toolData: ToolData? = null
 
-  @MapInfo(ignore = true, spFun = "conditionalNamesFun")
+  @IgnoreMap
+  @MapInfo(spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
 
   @MapInfo(param = "ITEM")
@@ -78,13 +81,13 @@ class Item : CddaObject() {
   @MapInfo(param = "NULL")//todo change to technique
   var techniques: MutableList<CddaItemRef> = mutableListOf()
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var properties: MutableMap<String, String> = mutableMapOf()
 
   @MapInfo(key = "properties", spFun = "propertiesFun")
   var propertiesJson: MutableList<StrStrPair> = mutableListOf()
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var chargedQualities: MutableMap<CddaItemRef, Int> = mutableMapOf()
 
   @JsonIgnore
@@ -97,7 +100,7 @@ class Item : CddaObject() {
   @MapInfo(param = "JSON_FLAG")
   var flags: MutableList<CddaItemRef> = mutableListOf()
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var minSkills: MutableMap<CddaItemRef, Int> = mutableMapOf()
 
   @JsonIgnore
@@ -110,19 +113,22 @@ class Item : CddaObject() {
   @MapInfo(param = "NULL")//todo change to item_group
   var nanofabTemplateGroup: CddaItemRef? = null
 
-  @MapInfo(ignore = true, spFun = "magazinesFun")
+  @IgnoreMap
+  @MapInfo(spFun = "magazinesFun")
   var magazines: MutableMap<String, MutableList<CddaItemRef>> = mutableMapOf()
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var defaultMagazine: MutableMap<String, CddaItemRef> = mutableMapOf()
 
-  @MapInfo(ignore = true, spFun = "phaseFun")
+  @IgnoreMap
+  @MapInfo(spFun = "phaseFun")
   var phase: PhaseType = PhaseType.SOLID
 
-  @MapInfo(ignore = true, spFun = "materialsFun")
+  @IgnoreMap
+  @MapInfo(spFun = "materialsFun")
   var materials: MutableList<Pair<CddaItemRef, Int>> = mutableListOf()
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var defaultMaterial: CddaItemRef? = null
 
   @JsonIgnore
@@ -162,16 +168,16 @@ class Item : CddaObject() {
   @MapInfo(spFun = "cuttingFun")
   var cutting: Int = 0
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var melee: DamageInstance = DamageInstance()
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var damageMin: Int = -1000
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var damageMax: Int = 4000
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var degradeIncrements: Int = 50
 
   fun ammoDataFun() {
@@ -349,7 +355,8 @@ class Item : CddaObject() {
 
   data class PocketData(
     var pocketType: String = "CONTAINER",
-    @MapInfo(ignore = true, spFun = "ammoRestrictionFun")
+    @IgnoreMap
+    @MapInfo(spFun = "ammoRestrictionFun")
     var ammoRestriction: MutableMap<String, Int> = mutableMapOf(),
     var description: Translation? = null,
     var name: Translation? = null,
@@ -427,7 +434,7 @@ class Item : CddaObject() {
     CLUMSY(0), UNEVEN(1), NEUTRAL(2), GOOD(3)
   }
 
-  data class ToHit(@MapInfo(ignore = true) var value: Int = 0) : CddaSubObject() {
+  data class ToHit(@IgnoreMap var value: Int = 0) : CddaSubObject() {
     override fun finalize(jsonValue: Any, param: String) {
       when (jsonValue) {
         is Int -> {

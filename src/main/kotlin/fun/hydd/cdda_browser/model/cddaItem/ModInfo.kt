@@ -1,5 +1,6 @@
 package `fun`.hydd.cdda_browser.model.cddaItem
 
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.model.CddaCommonItem
 import `fun`.hydd.cdda_browser.model.base.parent.CddaObject
@@ -20,7 +21,7 @@ class ModInfo : CddaObject() {
   @MapInfo(key = "category")
   var jsonCategory: String = "NO CATEGORY"
 
-  @MapInfo(ignore = true)
+  @IgnoreMap
   var category: Translation = Translation("NO CATEGORY")
 
   override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef) {

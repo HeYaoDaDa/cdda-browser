@@ -1,5 +1,6 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject
 
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.model.base.ProcessContext
@@ -69,15 +70,17 @@ data class ArmorData(
     var breathability: Material.BreathabilityRate? = null,
     var rigidLayerOnly: Boolean = false,
     var encumbranceModifiers: MutableSet<EncumbranceModifier>? = null,
-    @MapInfo(ignore = true, spFun = "encumbranceFun")
+    @IgnoreMap
+    @MapInfo(spFun = "encumbranceFun")
     var encumbrance: Int = 0,
-    @MapInfo(ignore = true)
+    @IgnoreMap
     var maxEncumbrance: Int? = null,
     var materialThickness: Double = 0.0,
     var environmentalProtection: Int = 0,
     var environmentalProtectionWithFilter: Int = 0,
     var volumeEncumberModifier: Double = 1.0,
-    @MapInfo(ignore = true, spFun = "materialFun")
+    @IgnoreMap
+    @MapInfo(spFun = "materialFun")
     var material: MutableList<PartMaterial> = mutableListOf(),
     var layers: MutableList<LayerLevel> = mutableListOf()
   ) : CddaSubObject() {
