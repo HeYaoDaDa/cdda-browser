@@ -95,9 +95,7 @@ object CddaItemParseManager {
     var parent: CddaObject? = null
     if (commonItem.copyFrom != null) {
       val parentItemRef = CddaItemRef(commonItem.cddaType, commonItem.copyFrom)
-      val parseFinalItem =
-        ProcessContext.finalManager.find(commonItem.mod, parentItemRef).firstOrNull()
-          ?: throw NeedDeferException(parentItemRef)
+      val parseFinalItem = ProcessContext.FinalManager.find(parentItemRef)
       parent = parseFinalItem.cddaObject
     }
     val cddaObject = mapCddaCommonItem(commonItem, parent)

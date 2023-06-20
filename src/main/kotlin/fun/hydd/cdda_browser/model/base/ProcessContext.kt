@@ -41,7 +41,12 @@ object ProcessContext {
     fun find(mod: CddaModDto, cddaItemRef: CddaItemRef): List<FinalCddaItem> {
       val mods = mod.allDependencies.toMutableList()
       mods.add(mod)
+      mods.reverse()
       return mods.mapNotNull { findBySingleModId(it.id, cddaItemRef) }
+    }
+
+    fun find(cddaItemRef: CddaItemRef): FinalCddaItem {
+      return find(mod!!, cddaItemRef).firstOrNull() ?: throw NeedDeferException(cddaItemRef)
     }
 
     private fun findBySingleModId(modId: String, cddaItemRef: CddaItemRef): FinalCddaItem? {
