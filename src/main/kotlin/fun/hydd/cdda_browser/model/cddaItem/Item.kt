@@ -196,7 +196,7 @@ class Item : CddaObject() {
   }
 
   fun armorDataFun() {
-    if (ProcessContext.commonItem!!.jsonType == JsonType.ARMOR) {
+    if (listOf(JsonType.ARMOR, JsonType.TOOL_ARMOR).contains(ProcessContext.commonItem!!.jsonType)) {
       this.armorData = ArmorData()
       this.armorData!!.parse(ProcessContext.commonItem!!.json, "")
     }
