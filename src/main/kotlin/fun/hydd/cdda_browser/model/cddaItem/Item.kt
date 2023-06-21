@@ -74,6 +74,9 @@ class Item : CddaObject() {
   @MapInfo(spFun = "toolModDataFun")
   var toolModData: ToolModData? = null
 
+  @MapInfo(spFun = "bookDataFun")
+  var bookData: BookData? = null
+
   @IgnoreMap
   @MapInfo(spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
@@ -220,6 +223,13 @@ class Item : CddaObject() {
     if (ProcessContext.commonItem!!.jsonType == JsonType.TOOLMOD) {
       this.toolModData = ToolModData()
       this.toolModData!!.parse(ProcessContext.commonItem!!.json, "")
+    }
+  }
+
+  fun bookDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.BOOK) {
+      this.bookData = BookData()
+      this.bookData!!.parse(ProcessContext.commonItem!!.json, "")
     }
   }
 
