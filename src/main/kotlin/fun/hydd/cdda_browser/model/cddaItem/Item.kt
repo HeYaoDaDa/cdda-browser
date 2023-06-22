@@ -98,6 +98,10 @@ class Item : CddaObject() {
   var gunModData: GunModData? = null
 
   @IgnoreMap
+  @MapInfo(spFun = "magazineDataFun")
+  var magazineData: MagazineData? = null
+
+  @IgnoreMap
   @MapInfo(spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
 
@@ -285,6 +289,13 @@ class Item : CddaObject() {
       this.gunModData!!.parse(ProcessContext.commonItem!!.json.getJsonObject("gunmod_data"), "")
       this.toolModData = ToolModData()
       this.toolModData!!.parse(ProcessContext.commonItem!!.json.getJsonObject("gunmod_data"), "")
+    }
+  }
+
+  fun magazineDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.MAGAZINE) {
+      this.magazineData = MagazineData()
+      this.magazineData!!.parse(ProcessContext.commonItem!!.json, "")
     }
   }
 
