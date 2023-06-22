@@ -105,6 +105,9 @@ class Item : CddaObject() {
   @MapInfo(spFun = "batteryDataFun")
   var batteryData: BatteryData? = null
 
+  @MapInfo(spFun = "bionicDataFun")
+  var bionicData: BionicData? = null
+
   @IgnoreMap
   @MapInfo(spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
@@ -307,6 +310,13 @@ class Item : CddaObject() {
     if (ProcessContext.commonItem!!.jsonType == JsonType.BATTERY) {
       this.batteryData = BatteryData()
       this.batteryData!!.parse(ProcessContext.commonItem!!.json, "")
+    }
+  }
+
+  fun bionicDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.BIONIC_ITEM) {
+      this.bionicData = BionicData()
+      this.bionicData!!.parse(ProcessContext.commonItem!!.json, "")
     }
   }
 
