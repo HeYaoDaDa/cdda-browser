@@ -19,8 +19,8 @@ data class ToolModData(
   var magazineAdaptor: MutableMap<CddaItemRef, MutableList<CddaItemRef>> = mutableMapOf(),
   var pocketMods: MutableList<PocketData> = mutableListOf()
 ) : CddaSubObject() {
-  fun magazineAdaptorFun(jsonObject: JsonObject) {
-    jsonObject.getOrCreateJsonArray("magazine_adaptor")?.forEach { any ->
+  fun magazineAdaptorFun(json: JsonObject) {
+    json.getOrCreateJsonArray("magazine_adaptor")?.forEach { any ->
       if (any is JsonArray) {
         val list = any.list
         this.magazineAdaptor[CddaItemRef(CddaType.AMMUNITION_TYPE, list[0] as String)] =

@@ -76,7 +76,7 @@ data class DamageInstance(
 
   data class DamageUnit(
     @IgnoreMap
-    @MapInfo(spFun = "mapDamageType")
+    @MapInfo(spFun = "damageTypeFun")
     var damageType: DamageType = DamageType.NULL,
     var amount: Double = 0.0,
     var armorPenetration: Double = 0.0,
@@ -85,8 +85,8 @@ data class DamageInstance(
     var constantArmorMultiplier: Double = 1.0,
     var constantDamageMultiplier: Double = 1.0,
   ) : CddaSubObject() {
-    fun mapDamageType(jsonObject: JsonObject) {
-      val damageStr = jsonObject.getString("damage_type")
+    fun damageTypeFun(json: JsonObject) {
+      val damageStr = json.getString("damage_type")
       this.damageType = DamageType.valueOf(damageStr.uppercase())
     }
   }

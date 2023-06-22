@@ -83,8 +83,8 @@ object JsonUtil {
       log.info("\t\t\tprop ${prop.name}")
       val mapInfo = prop.findAnnotations(MapInfo::class).firstOrNull() ?: MapInfo()
       val ignore = prop.findAnnotations(IgnoreMap::class).isNotEmpty()
+      val jsonFieldName = mapInfo.key.ifBlank { javaField2JsonField(prop.name) }
       if (!ignore) {
-        val jsonFieldName = mapInfo.key.ifBlank { javaField2JsonField(prop.name) }
         var result = if (jsonValue is JsonObject) {
           if (jsonValue.containsKey(jsonFieldName)) {
             val realJsonValue = jsonValue.getValue(jsonFieldName)
@@ -106,6 +106,15 @@ object JsonUtil {
         val spFun = instant::class.functions.firstOrNull() { it.name == mapInfo.spFun }
           ?: throw Exception("class ${instant::class} spFun ${mapInfo.spFun} is miss")
         val args: MutableMap<KParameter, Any?> = mutableMapOf(spFun.instanceParameter!! to instant)
+        spFun.parameters.forEachIndexed { index, kParameter ->
+          if (index > 0) {
+            args[kParameter] = when (kParameter.name) {
+              "json" -> jsonValue
+              "fieldValue" -> if (jsonValue is JsonObject) jsonValue.getValue(jsonFieldName) else jsonValue
+              else -> throw Exception("miss arg ${kParameter.name}")
+            }
+          }
+        }
         if (spFun.parameters.size == 2) args[spFun.parameters[1]] = jsonValue
         spFun.callBy(args)
       }

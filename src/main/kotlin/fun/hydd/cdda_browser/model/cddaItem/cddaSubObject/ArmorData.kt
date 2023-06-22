@@ -93,41 +93,37 @@ data class ArmorData(
       }
     }
 
-    fun coverMeleeFun(jsonValue: Any) {
+    fun coverMeleeFun() {
       if (this.coverMelee == null) this.coverMelee = this.coverage
     }
 
-    fun coverageRangedFun(jsonValue: Any) {
+    fun coverageRangedFun() {
       if (this.coverageRanged == null) this.coverageRanged = this.coverage
     }
 
-    fun encumbranceFun(jsonValue: Any) {
-      if (jsonValue is JsonObject) {
-        jsonValue.getOrCreateJsonArray("encumbrance")?.forEachIndexed { index, any ->
-          when (index) {
-            0 -> this.encumbrance = any as Int
-            1 -> this.maxEncumbrance = any as Int
-            else -> throw Exception("encumbrance size over 2")
-          }
+    fun encumbranceFun(json: JsonObject) {
+      json.getOrCreateJsonArray("encumbrance")?.forEachIndexed { index, any ->
+        when (index) {
+          0 -> this.encumbrance = any as Int
+          1 -> this.maxEncumbrance = any as Int
+          else -> throw Exception("encumbrance size over 2")
         }
-      } else throw Exception("${jsonValue::class} is not JsonObject")
+      }
     }
 
-    fun materialFun(jsonValue: Any) {
-      if (jsonValue is JsonObject) {
-        jsonValue.getOrCreateJsonArray("material")?.forEach {
-          when (it) {
-            is String -> this.material.add(PartMaterial(type = CddaItemRef(CddaType.MATERIAL, it)))
-            is JsonObject -> {
-              val temp = PartMaterial()
-              temp.parse(it, "")
-              this.material.add(temp)
-            }
-
-            else -> throw Exception("${it::class} is not JsonObject or String")
+    fun materialFun(json: JsonObject) {
+      json.getOrCreateJsonArray("material")?.forEach {
+        when (it) {
+          is String -> this.material.add(PartMaterial(type = CddaItemRef(CddaType.MATERIAL, it)))
+          is JsonObject -> {
+            val temp = PartMaterial()
+            temp.parse(it, "")
+            this.material.add(temp)
           }
+
+          else -> throw Exception("${it::class} is not JsonObject or String")
         }
-      } else throw Exception("${jsonValue::class} is not JsonObject")
+      }
     }
   }
 

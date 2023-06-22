@@ -59,8 +59,8 @@ data class PocketData(
     }
   }
 
-  fun ammoRestrictionFun(jsonObject: JsonObject) {
-    jsonObject.getJsonObject("ammo_restriction")?.forEach {
+  fun ammoRestrictionFun(json: JsonObject) {
+    json.getJsonObject("ammo_restriction")?.forEach {
       this.ammoRestriction[it.key] = it.value as Int
     }
   }

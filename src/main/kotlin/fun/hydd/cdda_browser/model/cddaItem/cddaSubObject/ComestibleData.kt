@@ -58,8 +58,8 @@ data class ComestibleData(
   @IgnoreMap
   var latentHeat: Double = 333.0,
 ) : CddaSubObject() {
-  fun contaminationFun(jsonObject: JsonObject) {
-    jsonObject.getOrCreateJsonArray("contamination")?.forEach {
+  fun contaminationFun(json: JsonObject) {
+    json.getOrCreateJsonArray("contamination")?.forEach {
       if (it is JsonObject) {
         //todo change to disease
         contamination[CddaItemRef(CddaType.NULL, it.getString("disease"))] = it.getInteger("probability")
@@ -67,9 +67,9 @@ data class ComestibleData(
     }
   }
 
-  fun materialFun(jsonObject: JsonObject) {
-    if (jsonObject.containsKey("material")) this.material = mutableMapOf()
-    jsonObject.getOrCreateJsonArray("material")?.forEach {
+  fun materialFun(json: JsonObject) {
+    if (json.containsKey("material")) this.material = mutableMapOf()
+    json.getOrCreateJsonArray("material")?.forEach {
       when (it) {
         is JsonObject -> this.material!![CddaItemRef(CddaType.MATERIAL, it.getString("type"))] =
           it.getInteger("portion")

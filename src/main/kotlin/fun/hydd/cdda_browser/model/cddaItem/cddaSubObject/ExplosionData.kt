@@ -12,9 +12,9 @@ data class ExplosionData(
   var fire: Boolean = false,
   @IgnoreMap @MapInfo(spFun = "shrapnelFun") var shrapnel: ShrapnelData? = null
 ) : CddaSubObject() {
-  fun shrapnelFun(jsonValue: Any) {
-    if (jsonValue is JsonObject && jsonValue.containsKey("shrapnel")) {
-      when (val shrapnelJson = jsonValue.getValue("shrapnel")) {
+  fun shrapnelFun(json: JsonObject) {
+    if (json.containsKey("shrapnel")) {
+      when (val shrapnelJson = json.getValue("shrapnel")) {
         is Int -> this.shrapnel = ShrapnelData(casingMass = shrapnelJson)
         is JsonObject -> {
           this.shrapnel = ShrapnelData()
