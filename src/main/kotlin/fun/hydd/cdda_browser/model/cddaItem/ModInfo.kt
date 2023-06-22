@@ -7,8 +7,8 @@ import `fun`.hydd.cdda_browser.model.base.parent.CddaObject
 import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.CddaItemRef
 import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.Translation
 
+@Suppress("unused")
 class ModInfo : CddaObject() {
-  lateinit var id: String
   lateinit var name: Translation
   var authors: MutableSet<String> = mutableSetOf()
   var maintainers: MutableSet<String> = mutableSetOf()
@@ -18,14 +18,16 @@ class ModInfo : CddaObject() {
   var core: Boolean = false
   var obsolete: Boolean = false
 
-  @MapInfo(key = "category")
-  var jsonCategory: String = "NO CATEGORY"
 
   @IgnoreMap
+  @MapInfo(spFun = "categoryFun")
   var category: Translation = Translation("NO CATEGORY")
 
+  fun categoryFun(fieldValue: String?) {
+    if (fieldValue != null) this.category = getModCategory(fieldValue)
+  }
+
   override fun finalize(commonItem: CddaCommonItem, itemRef: CddaItemRef) {
-    this.category = getModCategory(this.jsonCategory)
     this.itemName = this.name
     this.itemDescription = this.description
   }

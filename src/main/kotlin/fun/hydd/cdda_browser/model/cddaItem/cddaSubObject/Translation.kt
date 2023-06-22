@@ -7,7 +7,7 @@ import io.vertx.core.json.JsonObject
 import java.lang.instrument.IllegalClassFormatException
 
 data class Translation(
-  @IgnoreMap var value: String = "",
+  @IgnoreMap var value: String = "UPDATE ERROR!!!",
 
   @IgnoreMap var ctxt: String? = null
 ) : CddaSubObject() {

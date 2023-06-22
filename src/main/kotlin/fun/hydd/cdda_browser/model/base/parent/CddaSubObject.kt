@@ -1,7 +1,9 @@
 package `fun`.hydd.cdda_browser.model.base.parent
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import `fun`.hydd.cdda_browser.util.JsonUtil
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 abstract class CddaSubObject {
 
   fun parse(jsonValue: Any, param: String) {
