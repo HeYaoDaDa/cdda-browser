@@ -90,6 +90,10 @@ class Item : CddaObject() {
   var engineData: EngineData? = null
 
   @IgnoreMap
+  @MapInfo(spFun = "wheelDataFun")
+  var wheelData: WheelData? = null
+
+  @IgnoreMap
   @MapInfo(spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
 
@@ -256,6 +260,13 @@ class Item : CddaObject() {
     if (ProcessContext.commonItem!!.jsonType == JsonType.ENGINE) {
       this.engineData = EngineData()
       this.engineData!!.parse(ProcessContext.commonItem!!.json, "")
+    }
+  }
+
+  fun wheelDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.WHEEL) {
+      this.wheelData = WheelData()
+      this.wheelData!!.parse(ProcessContext.commonItem!!.json, "")
     }
   }
 
