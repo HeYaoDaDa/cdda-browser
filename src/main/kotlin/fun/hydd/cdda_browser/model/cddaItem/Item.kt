@@ -15,6 +15,7 @@ import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit.Volume
 import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit.Weight
 import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.extension.getOrCreateJsonArray
+import `fun`.hydd.cdda_browser.util.extension.getTypeValue
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import kotlin.math.max
@@ -47,7 +48,10 @@ class Item : CddaObject() {
   var insulation: Double = 1.0
   var solarEfficiency: Double = 0.0
   var explosion: ExplosionData? = null
-  var qualities: MutableList<QualityData> = mutableListOf()
+
+  @IgnoreMap
+  @MapInfo(spFun = "qualitiesFun")
+  var qualities: MutableMap<CddaItemRef, Int> = mutableMapOf()
 
   //todo use_action,countdown_action,drop_action
   var countdownInterval: Int = 0
@@ -247,6 +251,12 @@ class Item : CddaObject() {
     }
   }
 
+  fun qualitiesFun() {
+    ProcessContext.commonItem!!.json.getTypeValue<MutableList<StrNumPair>>("qualities")?.forEach {
+      this.qualities[CddaItemRef(CddaType.NULL, it.name)] = it.value.toInt()
+    }
+  }
+
   fun chargedQualitiesFun() {
     this.chargedQualitiesJson.forEach {
       //todo change to quality
@@ -412,11 +422,4 @@ class Item : CddaObject() {
       } else throw Exception("ToHit proportional is not Double, it is $proportionalJson")
     }
   }
-
-
-  data class QualityData(
-    @MapInfo(param = "NULL")//todo change to quality
-    var id: CddaItemRef = CddaItemRef(),
-    var level: Int = 0
-  ) : CddaSubObject()
 }

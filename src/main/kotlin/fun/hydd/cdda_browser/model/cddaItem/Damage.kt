@@ -9,11 +9,6 @@ import io.vertx.core.json.JsonObject
 data class DamageInstance(
   var damageUnits: MutableList<DamageUnit> = mutableListOf()
 ) : CddaSubObject() {
-
-  override fun finalize(jsonValue: Any, param: String) {
-    autoMap(JsonObject.of("damage_units", jsonValue))
-  }
-
   override fun relative(relativeJson: Any, param: String) {
     if (relativeJson is JsonObject) {
       val damageType = DamageType.valueOf(relativeJson.getString("damage_type").uppercase())

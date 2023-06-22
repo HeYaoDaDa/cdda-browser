@@ -11,7 +11,6 @@ import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit.Energy
 import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.unit.Volume
 
 class Material : CddaObject() {
-  lateinit var id: String
   lateinit var name: Translation
   var bashResist: Double = 0.0
   var cutResist: Double = 0.0

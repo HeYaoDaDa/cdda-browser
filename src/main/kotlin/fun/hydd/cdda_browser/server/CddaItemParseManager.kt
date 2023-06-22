@@ -1,20 +1,16 @@
 package `fun`.hydd.cdda_browser.server
 
-import `fun`.hydd.cdda_browser.annotation.IgnoreMap
-import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.constant.CddaType
 import `fun`.hydd.cdda_browser.constant.JsonType
 import `fun`.hydd.cdda_browser.model.CddaCommonItem
 import `fun`.hydd.cdda_browser.model.CddaModDto
 import `fun`.hydd.cdda_browser.model.FinalCddaItem
+import `fun`.hydd.cdda_browser.model.InheritData
 import `fun`.hydd.cdda_browser.model.base.NeedDeferException
 import `fun`.hydd.cdda_browser.model.base.ProcessContext
 import `fun`.hydd.cdda_browser.model.base.parent.CddaObject
-import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject.CddaItemRef
 import `fun`.hydd.cdda_browser.util.JsonUtil
-import `fun`.hydd.cdda_browser.util.extension.proportional
-import `fun`.hydd.cdda_browser.util.extension.relative
 import io.vertx.core.file.FileSystem
 import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.async
@@ -23,10 +19,7 @@ import kotlinx.coroutines.coroutineScope
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.full.*
-import kotlin.reflect.jvm.jvmErasure
-import kotlin.reflect.jvm.jvmName
+import kotlin.reflect.full.primaryConstructor
 
 object CddaItemParseManager {
   private val log = LoggerFactory.getLogger(this.javaClass)
@@ -205,94 +198,7 @@ object CddaItemParseManager {
     val cddaObjectClass = item.cddaType.objectClass
     val instant = parent ?: cddaObjectClass.primaryConstructor!!.callBy(emptyMap())
 
-    cddaObjectClass.memberProperties.filterIsInstance<KMutableProperty<*>>().forEach { prop ->
-      log.info("\t\t\tprocess prop: ${prop.name}")
-      val mapInfo = prop.findAnnotations(MapInfo::class).firstOrNull() ?: MapInfo()
-      val ignore = prop.findAnnotations(IgnoreMap::class).isNotEmpty()
-      if (!ignore) {
-        val jsonFieldName = mapInfo.key.ifBlank { JsonUtil.javaField2JsonField(prop.name) }
-        if (item.json.containsKey(jsonFieldName)) {
-          val subJsonValue = item.json.getValue(jsonFieldName)
-          if (subJsonValue == null)
-            prop.setter.call(instant, null)
-          else
-            prop.setter.call(
-              instant, JsonUtil.parseJsonField(prop.returnType, item.json.getValue(jsonFieldName), mapInfo.param)
-            )
-        }
-        if (parent != null) processCopyFrom(prop, item, jsonFieldName, mapInfo.param, instant)
-      }
-      if (mapInfo.spFun.isNotBlank()) {
-        val spFun = cddaObjectClass.functions.firstOrNull() { it.name == mapInfo.spFun }
-          ?: throw Exception("class $cddaObjectClass spFun ${mapInfo.spFun} is miss")
-        spFun.call(instant)
-      }
-    }
+    JsonUtil.autoLoad(instant, item.json, InheritData(item.relative, item.proportional, item.extend, item.delete))
     return instant
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun processCopyFrom(
-    prop: KMutableProperty<*>,
-    item: CddaCommonItem,
-    jsonFieldName: String,
-    param: String,
-    instant: CddaObject,
-  ) {
-    val fieldType = prop.returnType
-    val fieldClass = fieldType.jvmErasure
-    if (fieldClass.superclasses.contains(MutableCollection::class)) {
-      if (item.extend?.containsKey(jsonFieldName) == true) {
-        val currentValue = prop.getter.call(instant) as MutableCollection<Any>
-        val extendValue = JsonUtil.parseJsonField(
-          fieldType,
-          item.extend.getValue(jsonFieldName),
-          param
-        ) as MutableCollection<Any>
-        currentValue.addAll(extendValue)
-      }
-
-      if (item.delete?.containsKey(jsonFieldName) == true) {
-        val currentValue = prop.getter.call(instant) as MutableCollection<*>
-        val deleteValue = JsonUtil.parseJsonField(
-          fieldType,
-          item.delete.getValue(jsonFieldName),
-          param
-        ) as MutableCollection<*>
-        currentValue.removeAll(deleteValue.toSet())
-      }
-    } else {
-      if (item.relative?.containsKey(jsonFieldName) == true) {
-        val currentValue = prop.getter.call(instant)
-        val relativeJsonValue = item.relative.getValue(jsonFieldName)
-        val relativeValue =
-          JsonUtil.parseJsonField(fieldType, relativeJsonValue, param)
-        if (currentValue is CddaSubObject && relativeValue is CddaSubObject) {
-          currentValue.relative(relativeJsonValue, param)
-        } else if (currentValue is Double && relativeValue is Double) {
-          val result = Double.relative(relativeJsonValue, currentValue)
-          prop.setter.call(instant, result)
-        } else if (currentValue is Int && relativeValue is Int) {
-          val result = Int.relative(relativeJsonValue, currentValue)
-          prop.setter.call(instant, result)
-        } else throw Exception("fieldClass(${fieldClass.jvmName}) not baseType or CddaSubObject")
-      }
-
-      if (item.proportional?.containsKey(jsonFieldName) == true) {
-        val currentValue = prop.getter.call(instant)
-        val proportionalJsonValue = item.proportional.getValue(jsonFieldName)
-        val proportionalValue =
-          JsonUtil.parseJsonField(fieldType, proportionalJsonValue, param)
-        if (currentValue is CddaSubObject && proportionalValue is CddaSubObject) {
-          currentValue.proportional(proportionalJsonValue, param)
-        } else if (currentValue is Double && proportionalValue is Double) {
-          val result = Double.proportional(proportionalJsonValue, currentValue)
-          prop.setter.call(instant, result)
-        } else if (currentValue is Int && proportionalValue is Int) {
-          val result = Int.proportional(proportionalJsonValue, currentValue)
-          prop.setter.call(instant, result)
-        } else throw Exception("fieldClass(${fieldClass.jvmName}) not baseType or CddaSubObject")
-      }
-    }
   }
 }

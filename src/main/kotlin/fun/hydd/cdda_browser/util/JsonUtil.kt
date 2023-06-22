@@ -1,17 +1,22 @@
 package `fun`.hydd.cdda_browser.util
 
+import `fun`.hydd.cdda_browser.annotation.IgnoreMap
+import `fun`.hydd.cdda_browser.annotation.MapInfo
+import `fun`.hydd.cdda_browser.model.InheritData
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
 import `fun`.hydd.cdda_browser.util.extension.parse
+import `fun`.hydd.cdda_browser.util.extension.proportional
+import `fun`.hydd.cdda_browser.util.extension.relative
 import io.vertx.core.file.FileSystem
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.await
 import java.io.File
 import kotlin.collections.set
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KParameter
 import kotlin.reflect.KType
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.full.superclasses
+import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 
@@ -70,7 +75,109 @@ object JsonUtil {
     )
   }
 
-  fun javaField2JsonField(fieldName: String): String {
+  fun autoLoad(instant: Any, jsonValue: Any, inheritData: InheritData?) {
+    instant::class.memberProperties.filterIsInstance<KMutableProperty<*>>().forEach { prop ->
+      val mapInfo = prop.findAnnotations(MapInfo::class).firstOrNull() ?: MapInfo()
+      val ignore = prop.findAnnotations(IgnoreMap::class).isNotEmpty()
+      if (!ignore) {
+        val jsonFieldName = mapInfo.key.ifBlank { javaField2JsonField(prop.name) }
+        var result = if (jsonValue is JsonObject) {
+          if (jsonValue.containsKey(jsonFieldName)) {
+            val realJsonValue = jsonValue.getValue(jsonFieldName)
+            if (realJsonValue == null)
+              null
+            else
+              parseJsonField(prop.returnType, realJsonValue, mapInfo.param)
+          } else {
+            prop.getter.call(instant)
+          }
+        } else {
+          parseJsonField(prop.returnType, jsonValue, mapInfo.param)
+        }
+        if (inheritData != null) result =
+          processInheritData(prop.returnType, result, inheritData, jsonFieldName, mapInfo.param)
+        prop.setter.call(instant, result)
+      }
+      if (mapInfo.spFun.isNotBlank()) {
+        val spFun = instant::class.functions.firstOrNull() { it.name == mapInfo.spFun }
+          ?: throw Exception("class ${instant::class} spFun ${mapInfo.spFun} is miss")
+        val args: MutableMap<KParameter, Any?> = mutableMapOf(spFun.instanceParameter!! to instant)
+        if (spFun.parameters.size == 2) args[spFun.parameters[1]] = jsonValue
+        spFun.callBy(args)
+      }
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun processInheritData(
+    fieldType: KType,
+    currentValue: Any?,
+    inheritData: InheritData,
+    jsonFieldName: String,
+    param: String,
+  ): Any? {
+    val fieldClass = fieldType.jvmErasure
+    if (fieldClass.superclasses.contains(MutableCollection::class)) {
+      if (inheritData.extend?.containsKey(jsonFieldName) == true) {
+        val extendValue = parseJsonField(
+          fieldType,
+          inheritData.extend.getValue(jsonFieldName),
+          param
+        ) as MutableCollection<Any>
+        return if (currentValue != null) {
+          (currentValue as MutableCollection<Any>).addAll(extendValue)
+          currentValue
+        } else {
+          extendValue
+        }
+      }
+      if (inheritData.delete?.containsKey(jsonFieldName) == true) {
+        return if (currentValue != null) {
+          val deleteValue = parseJsonField(
+            fieldType,
+            inheritData.delete.getValue(jsonFieldName),
+            param
+          ) as MutableCollection<*>
+          (currentValue as MutableCollection<*>).removeAll(deleteValue.toSet())
+          currentValue
+        } else null
+      }
+    } else {
+      if (inheritData.relative?.containsKey(jsonFieldName) == true) {
+        val relativeJsonValue = inheritData.relative.getValue(jsonFieldName)
+        val relativeValue =
+          parseJsonField(fieldType, relativeJsonValue, param)
+        return if (currentValue != null) {
+          if (currentValue is CddaSubObject && relativeValue is CddaSubObject) {
+            currentValue.relative(relativeJsonValue, param)
+            currentValue
+          } else if (currentValue is Double && relativeValue is Double) {
+            Double.relative(relativeJsonValue, currentValue)
+          } else if (currentValue is Int && relativeValue is Int) {
+            Int.relative(relativeJsonValue, currentValue)
+          } else throw Exception("fieldClass(${fieldClass.jvmName}) not baseType or CddaSubObject")
+        } else relativeValue
+      }
+      if (inheritData.proportional?.containsKey(jsonFieldName) == true) {
+        return if (currentValue != null) {
+          val proportionalJsonValue = inheritData.proportional.getValue(jsonFieldName)
+          val proportionalValue =
+            parseJsonField(fieldType, proportionalJsonValue, param)
+          if (currentValue is CddaSubObject && proportionalValue is CddaSubObject) {
+            currentValue.proportional(proportionalJsonValue, param)
+            currentValue
+          } else if (currentValue is Double && proportionalValue is Double) {
+            Double.proportional(proportionalJsonValue, currentValue)
+          } else if (currentValue is Int && proportionalValue is Int) {
+            Int.proportional(proportionalJsonValue, currentValue)
+          } else throw Exception("fieldClass(${fieldClass.jvmName}) not baseType or CddaSubObject")
+        } else null
+      }
+    }
+    return currentValue
+  }
+
+  private fun javaField2JsonField(fieldName: String): String {
     val result = StringBuilder()
     for (char in fieldName) {
       if (char != char.lowercaseChar()) result.append("_")
@@ -89,6 +196,15 @@ object JsonUtil {
       fieldInstant.addAll((if (jsonValue is JsonArray) jsonValue else JsonArray.of(jsonValue)).map {
         parseJsonField(subFieldType, it, param)
       })
+      fieldInstant
+    } else if (fieldClass.isSubclassOf(MutableMap::class)) {
+      val valueType = fieldType.arguments[1].type!!
+      val fieldInstant: MutableMap<String, Any> = mutableMapOf()
+      if (jsonValue is JsonObject) {
+        jsonValue.forEach {
+          fieldInstant[it.key] = parseJsonField(valueType, it.value, param)
+        }
+      }
       fieldInstant
     } else {
       when (fieldClass) {

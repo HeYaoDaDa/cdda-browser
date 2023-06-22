@@ -4,6 +4,7 @@ import `fun`.hydd.cdda_browser.util.JsonUtil
 import `fun`.hydd.cdda_browser.util.StringUtil
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import kotlin.reflect.typeOf
 
 inline fun <reified T : Any> JsonObject.getCollection(key: String): Collection<T>? {
   return this.getOrCreateJsonArray(key)?.mapNotNull {
@@ -26,6 +27,11 @@ fun JsonObject.getOrCreateJsonArray(key: String): JsonArray? {
 
 inline fun <reified T : Any> JsonObject.getCollection(key: String, def: Collection<T>): Collection<T> {
   return this.getCollection(key) ?: def
+}
+
+inline fun <reified T> JsonObject.getTypeValue(key: String, para: String = ""): T? {
+  val jsonValue = this.getValue(key)
+  return if (jsonValue != null) JsonUtil.parseJsonField(typeOf<T>(), jsonValue, para) as T else null
 }
 
 inline fun <reified T : Any> JsonObject.getSet(
