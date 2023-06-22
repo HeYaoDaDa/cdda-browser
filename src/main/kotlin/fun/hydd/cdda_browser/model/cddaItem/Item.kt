@@ -82,6 +82,10 @@ class Item : CddaObject() {
   var bookData: BookData? = null
 
   @IgnoreMap
+  @MapInfo(spFun = "comestibleDataFun")
+  var comestibleData: ComestibleData? = null
+
+  @IgnoreMap
   @MapInfo(spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
 
@@ -234,6 +238,13 @@ class Item : CddaObject() {
     if (ProcessContext.commonItem!!.jsonType == JsonType.BOOK) {
       this.bookData = BookData()
       this.bookData!!.parse(ProcessContext.commonItem!!.json, "")
+    }
+  }
+
+  fun comestibleDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.COMESTIBLE) {
+      this.comestibleData = ComestibleData()
+      this.comestibleData!!.parse(ProcessContext.commonItem!!.json, "")
     }
   }
 

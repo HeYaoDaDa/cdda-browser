@@ -21,8 +21,6 @@ data class StrNumPair(
             is Int -> it.toDouble()
             else -> throw Exception()
           }
-
-          else -> throw Exception()
         }
       }
       if (name != null && value != null) {

@@ -11,6 +11,7 @@ import io.vertx.core.file.FileSystem
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.await
+import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.collections.set
 import kotlin.reflect.KMutableProperty
@@ -21,6 +22,8 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 
 object JsonUtil {
+  private val log = LoggerFactory.getLogger(this.javaClass)
+
   /**
    * Get json file all JsonObject
    *
@@ -77,6 +80,7 @@ object JsonUtil {
 
   fun autoLoad(instant: Any, jsonValue: Any, inheritData: InheritData?) {
     instant::class.memberProperties.filterIsInstance<KMutableProperty<*>>().forEach { prop ->
+      log.info("\t\t\tprop ${prop.name}")
       val mapInfo = prop.findAnnotations(MapInfo::class).firstOrNull() ?: MapInfo()
       val ignore = prop.findAnnotations(IgnoreMap::class).isNotEmpty()
       if (!ignore) {
