@@ -1,6 +1,5 @@
 package `fun`.hydd.cdda_browser.model.cddaItem.cddaSubObject
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import `fun`.hydd.cdda_browser.annotation.IgnoreMap
 import `fun`.hydd.cdda_browser.annotation.MapInfo
 import `fun`.hydd.cdda_browser.model.base.parent.CddaSubObject
@@ -36,20 +35,9 @@ data class GunData(
   var minCycleRecoil: Int = 0,
   var ammoEffects: MutableSet<String> = mutableSetOf(),
   var ammoToFire: Int = 1,
-  @IgnoreMap
   var validModLocations: MutableMap<Translation, Int> = mutableMapOf(),
-  @JsonIgnore
-  @MapInfo(key = "valid_mod_locations", spFun = "validModLocationsJsonFun")
-  var validModLocationsJson: MutableList<StrNumPair> = mutableListOf(),
   var modes: MutableList<GunModeData> = mutableListOf(),
 ) : CddaSubObject() {
-
-  fun validModLocationsJsonFun(jsonValue: Any) {
-    this.validModLocationsJson.forEach {
-      this.validModLocations[Translation(it.name)] = it.value.toInt()
-    }
-  }
-
   data class GunModeData(
     @IgnoreMap var id: String = "",
     @IgnoreMap var name: Translation = Translation(),

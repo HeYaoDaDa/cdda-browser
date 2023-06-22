@@ -94,6 +94,10 @@ class Item : CddaObject() {
   var wheelData: WheelData? = null
 
   @IgnoreMap
+  @MapInfo(spFun = "gunModDataFun")
+  var gunModData: GunModData? = null
+
+  @IgnoreMap
   @MapInfo(spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
 
@@ -267,6 +271,20 @@ class Item : CddaObject() {
     if (ProcessContext.commonItem!!.jsonType == JsonType.WHEEL) {
       this.wheelData = WheelData()
       this.wheelData!!.parse(ProcessContext.commonItem!!.json, "")
+    }
+  }
+
+  fun gunModDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.GUNMOD) {
+      this.gunModData = GunModData()
+      this.gunModData!!.parse(ProcessContext.commonItem!!.json, "")
+      this.toolModData = ToolModData()
+      this.toolModData!!.parse(ProcessContext.commonItem!!.json, "")
+    } else if (ProcessContext.commonItem!!.json.containsKey("gunmod_data")) {
+      this.gunModData = GunModData()
+      this.gunModData!!.parse(ProcessContext.commonItem!!.json.getJsonObject("gunmod_data"), "")
+      this.toolModData = ToolModData()
+      this.toolModData!!.parse(ProcessContext.commonItem!!.json.getJsonObject("gunmod_data"), "")
     }
   }
 

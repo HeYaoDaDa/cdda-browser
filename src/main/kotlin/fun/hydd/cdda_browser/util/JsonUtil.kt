@@ -202,11 +202,12 @@ object JsonUtil {
       })
       fieldInstant
     } else if (fieldClass.isSubclassOf(MutableMap::class)) {
+      val keyType = fieldType.arguments[0].type!!
       val valueType = fieldType.arguments[1].type!!
-      val fieldInstant: MutableMap<String, Any> = mutableMapOf()
+      val fieldInstant: MutableMap<Any, Any> = mutableMapOf()
       if (jsonValue is JsonObject) {
         jsonValue.forEach {
-          fieldInstant[it.key] = parseJsonField(valueType, it.value, param)
+          fieldInstant[parseJsonField(keyType, it.key, param)] = parseJsonField(valueType, it.value, param)
         }
       }
       fieldInstant
