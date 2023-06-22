@@ -102,6 +102,10 @@ class Item : CddaObject() {
   var magazineData: MagazineData? = null
 
   @IgnoreMap
+  @MapInfo(spFun = "batteryDataFun")
+  var batteryData: BatteryData? = null
+
+  @IgnoreMap
   @MapInfo(spFun = "conditionalNamesFun")
   var conditionalNames: MutableList<Translation> = mutableListOf()
 
@@ -296,6 +300,13 @@ class Item : CddaObject() {
     if (ProcessContext.commonItem!!.jsonType == JsonType.MAGAZINE) {
       this.magazineData = MagazineData()
       this.magazineData!!.parse(ProcessContext.commonItem!!.json, "")
+    }
+  }
+
+  fun batteryDataFun() {
+    if (ProcessContext.commonItem!!.jsonType == JsonType.BATTERY) {
+      this.batteryData = BatteryData()
+      this.batteryData!!.parse(ProcessContext.commonItem!!.json, "")
     }
   }
 
